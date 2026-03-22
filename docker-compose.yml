@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: cinetrack-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: cinetrack
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinetrack-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_PUBLIC_API_BASE=http://localhost:3001/api
+      - NUXT_API_BASE=http://backend:3001/api
+    depends_on:
+      - backend
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cinetrack-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/cinetrack
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_here}
+      - FRONTEND_URL=http://localhost:3000
+      - TMDB_API_KEY=85f102eb2bca94c4f6b9366439728adf
+      - TMDB_ACCESS_TOKEN=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NWYxMDJlYjJiY2E5NGM0ZjZiOTM2NjQzOTcyOGFkZiIsIm5iZiI6MTc3NDUxMDU5MS45NDIwMDAyLCJzdWIiOiI2OWM0ZTFlZmY3OTU4ZTk0YWNiNDIwOTU5Iiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.o96jtG3bcU06xI4Gf_qy1V9WVr6te-7zXAAAWKSqCZs
+      - TMDB_BASE_URL=https://api.themoviedb.org/3
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+networks:
+  cinetrack-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
