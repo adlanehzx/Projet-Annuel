@@ -1,0 +1,6 @@
+.env
+.env.local
+.git
+.gitignore
+.DS_Store
+*.log
