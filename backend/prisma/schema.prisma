@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  username String @unique
+  password String
+  watchlist Watchlist[]
+  reviews Review[]
+  collections Collection[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Watchlist avec status
+model Watchlist {
+  id    Int     @id @default(autoincrement())
+  tmdbId Int @unique
+  title String
+  posterPath String?
+  status WatchStatus @default(TO_WATCH) // TO_WATCH, WATCHING, COMPLETED
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews Review[]
+  inCollections CollectionItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tmdbId])
+  @@index([userId])
+}
+
+enum WatchStatus {
+  TO_WATCH
+  WATCHING
+  COMPLETED
+}
+
+// Reviews & Notes
+model Review {
+  id    Int     @id @default(autoincrement())
+  rating Int @default(0) // 0-10
+  comment String?
+  userId Int
+  watchlistId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, watchlistId])
+  @@index([userId])
+  @@index([watchlistId])
+}
+
+// Collections personnalisées (listes thématiques)
+model Collection {
+  id    Int     @id @default(autoincrement())
+  name String
+  description String?
+  isPublic Boolean @default(false)
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CollectionItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model CollectionItem {
+  id    Int     @id @default(autoincrement())
+  order Int @default(0)
+  collectionId Int
+  watchlistId Int
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([collectionId, watchlistId])
+  @@index([collectionId])
+  @@index([watchlistId])
+}
