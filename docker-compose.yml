@@ -19,8 +19,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: cinetrack-frontend
     ports:
       - "3000:3000"
@@ -35,8 +35,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: cinetrack-backend
     ports:
       - "3001:3001"
