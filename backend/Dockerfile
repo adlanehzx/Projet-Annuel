@@ -5,11 +5,11 @@ WORKDIR /app
 
 RUN apk add --no-cache openssl
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY backend/package.json backend/package-lock.json* backend/pnpm-lock.yaml* backend/yarn.lock* ./
 
 RUN npm install --frozen-lockfile
 
-COPY . .
+COPY backend/ .
 
 RUN npx prisma generate
 
@@ -28,7 +28,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY .env.docker .env
-COPY package.json .
+COPY backend/package.json .
 
 EXPOSE 3001
 

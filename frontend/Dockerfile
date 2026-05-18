@@ -3,11 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* frontend/yarn.lock* ./
 
 RUN npm install --frozen-lockfile
 
-COPY . .
+COPY frontend/ .
 
 # Copier la configuration .env pour Docker
 COPY .env.docker .env
@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.env .env
-COPY package.json .
+COPY frontend/package.json .
 
 EXPOSE 3000
 
