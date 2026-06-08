@@ -15,9 +15,26 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  password: string;
+  password?: string;
+  isPublic?: boolean;
+  bio?: string;
+  avatar?: string;
+  totpEnabled?: boolean;
   createdAt: Date;
   updatedAt?: Date;
+}
+
+export interface TwoFactorSetup {
+  secret: string;
+  qrCode: string;
+}
+
+export interface OAuthPayload {
+  id?: string;
+  email: string;
+  name?: string;
+  picture?: string;
+  provider: "google" | "github";
 }
 
 export interface Review {
