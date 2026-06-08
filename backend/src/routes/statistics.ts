@@ -1,5 +1,9 @@
 import { Router, Request, Response } from "express";
-import { getBasicStatistics, getAdvancedStatistics, getRecommendations } from "../services/statistics.js";
+import {
+  getBasicStatistics,
+  getAdvancedStatistics,
+  getRecommendations,
+} from "../services/statistics.js";
 
 const router = Router();
 

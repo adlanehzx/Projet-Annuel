@@ -11,7 +11,9 @@ export interface UserStatistics {
   recommendations: any[];
 }
 
-export const getUserStatistics = async (userId: number): Promise<UserStatistics> => {
+export const getUserStatistics = async (
+  userId: number,
+): Promise<UserStatistics> => {
   // Total animes vus (COMPLETED status)
   const completedCount = await prisma.watchlist.count({
     where: {
@@ -119,20 +121,25 @@ export const getAdvancedStatistics = async (userId: number) => {
   });
 
   // Statistiques par statut
-  const completedCount = watchlist.filter(w => w.status === "COMPLETED").length;
-  const watchingCount = watchlist.filter(w => w.status === "WATCHING").length;
-  const toWatchCount = watchlist.filter(w => w.status === "TO_WATCH").length;
+  const completedCount = watchlist.filter(
+    (w) => w.status === "COMPLETED",
+  ).length;
+  const watchingCount = watchlist.filter((w) => w.status === "WATCHING").length;
+  const toWatchCount = watchlist.filter((w) => w.status === "TO_WATCH").length;
 
   // Notes
-  const ratedItems = watchlist.filter(w => w.reviews.length > 0);
-  const allRatings = ratedItems.flatMap(w => w.reviews.map(r => r.rating));
-  const averageRating = allRatings.length > 0
-    ? Math.round((allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 100) / 100
-    : 0;
+  const ratedItems = watchlist.filter((w) => w.reviews.length > 0);
+  const allRatings = ratedItems.flatMap((w) => w.reviews.map((r) => r.rating));
+  const averageRating =
+    allRatings.length > 0
+      ? Math.round(
+          (allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 100,
+        ) / 100
+      : 0;
 
   // Top animes les mieux notés
   const topRated = ratedItems
-    .map(w => ({
+    .map((w) => ({
       title: w.title,
       tmdbId: w.tmdbId,
       rating: w.reviews[0]?.rating ?? 0,
@@ -142,7 +149,7 @@ export const getAdvancedStatistics = async (userId: number) => {
 
   // Animes avec les plus basses notes
   const worstRated = ratedItems
-    .map(w => ({
+    .map((w) => ({
       title: w.title,
       tmdbId: w.tmdbId,
       rating: w.reviews[0]?.rating ?? 0,
@@ -152,25 +159,28 @@ export const getAdvancedStatistics = async (userId: number) => {
 
   // Distribution des notes
   const ratingDistribution = {
-    "10": allRatings.filter(r => r === 10).length,
-    "9": allRatings.filter(r => r === 9).length,
-    "8": allRatings.filter(r => r === 8).length,
-    "7": allRatings.filter(r => r === 7).length,
-    "6": allRatings.filter(r => r === 6).length,
-    "5": allRatings.filter(r => r === 5).length,
-    "4": allRatings.filter(r => r === 4).length,
-    "3": allRatings.filter(r => r === 3).length,
-    "2": allRatings.filter(r => r === 2).length,
-    "1": allRatings.filter(r => r === 1).length,
+    "10": allRatings.filter((r) => r === 10).length,
+    "9": allRatings.filter((r) => r === 9).length,
+    "8": allRatings.filter((r) => r === 8).length,
+    "7": allRatings.filter((r) => r === 7).length,
+    "6": allRatings.filter((r) => r === 6).length,
+    "5": allRatings.filter((r) => r === 5).length,
+    "4": allRatings.filter((r) => r === 4).length,
+    "3": allRatings.filter((r) => r === 3).length,
+    "2": allRatings.filter((r) => r === 2).length,
+    "1": allRatings.filter((r) => r === 1).length,
   };
 
   // Statistiques temporelles
-  const reviewsByMonth = allReviews.reduce((acc, review) => {
-    const date = new Date(review.createdAt);
-    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    acc[month] = (acc[month] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const reviewsByMonth = allReviews.reduce(
+    (acc, review) => {
+      const date = new Date(review.createdAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      acc[month] = (acc[month] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return {
     summary: {
@@ -222,7 +232,7 @@ export const getRecommendations = async (userId: number) => {
   // Pour l'instant, retourner simplement les anime similaires à ceux aimés
   // Une implémentation complète nécessiterait une intégration avec l'API TMDB
   // pour obtenir les genres et les animes similaires
-  const recommendations = topRatedAnimes.map(anime => ({
+  const recommendations = topRatedAnimes.map((anime) => ({
     based_on_title: anime.title,
     based_on_rating: anime.reviews[0]?.rating,
     tmdbId: anime.tmdbId,
@@ -235,4 +245,3 @@ export const getRecommendations = async (userId: number) => {
     note: "Cette fonctionnalité nécessite une intégration avec l'API TMDB pour analyser les genres",
   };
 };
-

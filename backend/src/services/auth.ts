@@ -27,12 +27,14 @@ export const verifyTOTPToken = (secret: string, token: string): boolean => {
   });
 };
 
-export const generateJWT = (userId: number, email: string, expiresIn: string = "7d"): string => {
-  return jwt.sign(
-    { id: userId, email },
-    process.env.JWT_SECRET || "secret",
-    { expiresIn }
-  );
+export const generateJWT = (
+  userId: number,
+  email: string,
+  expiresIn: string = "7d",
+): string => {
+  return jwt.sign({ id: userId, email }, process.env.JWT_SECRET || "secret", {
+    expiresIn,
+  });
 };
 
 export const hashPassword = (password: string): string => {

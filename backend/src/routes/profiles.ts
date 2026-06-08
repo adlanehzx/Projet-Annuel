@@ -26,9 +26,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     // Si le profil n'est pas public et l'utilisateur n'est pas le propriétaire
     const userId = (req as any).userId;
     if (!user.isPublic && user.id !== userId) {
-      return res
-        .status(403)
-        .json({ error: "Ce profil n'est pas public" });
+      return res.status(403).json({ error: "Ce profil n'est pas public" });
     }
 
     // Récupérer les collections publiques
