@@ -10,13 +10,18 @@ pnpm-lock.yaml
 .env.*.local
 .env.production.local
 
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 *.sublime-project
 *.sublime-workspace
 
@@ -26,7 +31,6 @@ build/
 .nuxt/
 .output/
 coverage/
-*.log
 
 # Runtime
 tmp/
@@ -45,7 +49,13 @@ prisma/migrations/
 .dockerignore
 docker-compose.override.yml
 
+# Database volume
+postgres_data/
+
 # Misc
 *.pid
 *.seed
 *.pid.lock
+
+# Design assets
+design-reference/
