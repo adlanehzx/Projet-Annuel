@@ -31,6 +31,7 @@ model User {
   watchlist Watchlist[]
   reviews Review[]
   collections Collection[]
+  lists List[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -115,4 +116,34 @@ model CollectionItem {
   @@unique([collectionId, watchlistId])
   @@index([collectionId])
   @@index([watchlistId])
+}
+
+model List {
+  id          Int        @id @default(autoincrement())
+  userId      Int        @map("user_id")
+  title       String
+  description String?
+  isPublic    Boolean    @default(false) @map("is_public")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animes      ListAnime[]
+
+  @@index([userId])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@map("lists")
+}
+
+model ListAnime {
+  id       Int   @id @default(autoincrement())
+  listId   Int   @map("list_id")
+  animeId  Int   @map("anime_id")
+  position Int
+  list     List  @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, animeId])
+  @@index([listId])
+  @@index([animeId])
+  @@index([listId, position])
+  @@map("list_animes")
 }
