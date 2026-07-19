@@ -139,4 +139,162 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/:id/animes", async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const id = parseId(req.params.id);
+    const animeId = parseId(String(req.body.animeId));
+
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+    if (!id || !animeId) {
+      return res.status(400).json({ error: "Identifiant invalide" });
+    }
+
+    const list = await prisma.list.findUnique({ where: { id } });
+
+    if (!list) return res.status(404).json({ error: "Liste non trouvée" });
+    if (list.userId !== userId) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const anime = await prisma.anime.findUnique({ where: { id: animeId } });
+
+    if (!anime) return res.status(404).json({ error: "Anime non trouvé" });
+
+    const position = await prisma.listAnime.aggregate({
+      where: { listId: id },
+      _max: { position: true },
+    });
+
+    const listAnime = await prisma.listAnime.create({
+      data: {
+        listId: id,
+        animeId,
+        position: (position._max.position || 0) + 1,
+      },
+      include: { anime: true },
+    });
+
+    res.status(201).json(listAnime);
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      return res.status(400).json({ error: "Cet anime est déjà dans la liste" });
+    }
+
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.delete("/:id/animes/:animeId", async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const id = parseId(req.params.id);
+    const animeId = parseId(req.params.animeId);
+
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+    if (!id || !animeId) {
+      return res.status(400).json({ error: "Identifiant invalide" });
+    }
+
+    const list = await prisma.list.findUnique({ where: { id } });
+
+    if (!list) return res.status(404).json({ error: "Liste non trouvée" });
+    if (list.userId !== userId) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const listAnime = await prisma.listAnime.findUnique({
+      where: {
+        listId_animeId: {
+          listId: id,
+          animeId,
+        },
+      },
+    });
+
+    if (!listAnime) {
+      return res.status(404).json({ error: "Anime absent de la liste" });
+    }
+
+    await prisma.listAnime.delete({ where: { id: listAnime.id } });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.put("/:id/reorder", async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const id = parseId(req.params.id);
+    const animeIds = req.body.animeIds;
+
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+    if (!id) return res.status(400).json({ error: "Identifiant invalide" });
+    if (!Array.isArray(animeIds) || animeIds.length === 0) {
+      return res.status(400).json({ error: "La liste des animes est requise" });
+    }
+
+    const orderedAnimeIds = animeIds.map((animeId) => parseId(String(animeId)));
+
+    if (orderedAnimeIds.some((animeId) => !animeId)) {
+      return res.status(400).json({ error: "Identifiant invalide" });
+    }
+
+    const uniqueAnimeIds = new Set(orderedAnimeIds);
+
+    if (uniqueAnimeIds.size !== orderedAnimeIds.length) {
+      return res.status(400).json({ error: "La liste contient des doublons" });
+    }
+
+    const list = await prisma.list.findUnique({ where: { id } });
+
+    if (!list) return res.status(404).json({ error: "Liste non trouvée" });
+    if (list.userId !== userId) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const existingItems = await prisma.listAnime.findMany({
+      where: {
+        listId: id,
+        animeId: { in: orderedAnimeIds as number[] },
+      },
+      select: { animeId: true },
+    });
+
+    if (existingItems.length !== orderedAnimeIds.length) {
+      return res.status(400).json({ error: "Certains animes ne sont pas dans la liste" });
+    }
+
+    await prisma.$transaction(
+      (orderedAnimeIds as number[]).map((animeId, index) =>
+        prisma.listAnime.update({
+          where: {
+            listId_animeId: {
+              listId: id,
+              animeId,
+            },
+          },
+          data: { position: index + 1 },
+        }),
+      ),
+    );
+
+    const updated = await prisma.list.findUnique({
+      where: { id },
+      include: {
+        animes: {
+          include: { anime: true },
+          orderBy: { position: "asc" },
+        },
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 export default router;
