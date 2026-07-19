@@ -140,10 +140,64 @@ model ListAnime {
   animeId  Int   @map("anime_id")
   position Int
   list     List  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  anime    Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
 
   @@unique([listId, animeId])
   @@index([listId])
   @@index([animeId])
   @@index([listId, position])
   @@map("list_animes")
+}
+
+model Anime {
+  id          Int           @id @default(autoincrement())
+  jikanId     Int           @unique @map("jikan_id")
+  title       String
+  titleEnglish String?      @map("title_english")
+  synopsis    String?
+  imageUrl    String?       @map("image_url")
+  score       Float?
+  rank        Int?
+  popularity  Int?
+  episodes    Int?
+  status      String?
+  airedFrom   DateTime?     @map("aired_from")
+  airedTo     DateTime?     @map("aired_to")
+  url         String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  genres      AnimeGenre[]
+  listItems   ListAnime[]
+
+  @@index([score])
+  @@index([rank])
+  @@index([popularity])
+  @@index([title])
+  @@map("animes")
+}
+
+model Genre {
+  id        Int          @id @default(autoincrement())
+  jikanId   Int          @unique @map("jikan_id")
+  name      String
+  slug      String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  animes    AnimeGenre[]
+
+  @@index([name])
+  @@map("genres")
+}
+
+model AnimeGenre {
+  id       Int   @id @default(autoincrement())
+  animeId  Int   @map("anime_id")
+  genreId  Int   @map("genre_id")
+  anime    Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  genre    Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([animeId, genreId])
+  @@index([animeId])
+  @@index([genreId])
+  @@map("anime_genres")
 }
