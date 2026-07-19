@@ -7,6 +7,7 @@ import tmdbRoutes from "./routes/tmdb.js";
 import watchlistRoutes from "./routes/watchlist.js";
 import reviewRoutes from "./routes/reviews.js";
 import collectionRoutes from "./routes/collections.js";
+import listRoutes from "./routes/lists.js";
 import profileRoutes from "./routes/profiles.js";
 import statisticsRoutes from "./routes/statistics.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -36,6 +37,7 @@ app.use("/api/profiles", profileRoutes);
 app.use("/api/watchlist", authMiddleware, watchlistRoutes);
 app.use("/api/reviews", authMiddleware, reviewRoutes);
 app.use("/api/collections", authMiddleware, collectionRoutes);
+app.use("/api/lists", authMiddleware, listRoutes);
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/statistics", authMiddleware, statisticsRoutes);
 
