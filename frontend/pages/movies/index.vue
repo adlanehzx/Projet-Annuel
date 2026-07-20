@@ -1,58 +1,44 @@
 <template>
   <main class="max-w-7xl mx-auto px-4 py-12">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold">Films</h1>
-      <NuxtLink
-        v-if="auth.isAuthenticated.value"
-        to="/movies/add"
-        class="btn btn-primary"
-      >
-        + Ajouter
+      <h1 class="text-3xl font-bold">Catalogue Animes</h1>
+      <NuxtLink to="/movies/search" class="btn btn-primary">
+        🔍 Rechercher
       </NuxtLink>
     </div>
 
     <div v-if="isLoading" class="text-center py-12">
-      <p class="text-slate-400">Chargement des films...</p>
+      <p class="text-slate-400">Chargement des animes...</p>
     </div>
 
-    <div v-else-if="movies.length === 0" class="text-center py-12">
-      <p class="text-slate-400">Aucun film pour le moment</p>
+    <div v-else-if="animes.length === 0" class="text-center py-12">
+      <p class="text-slate-400">Aucun anime pour le moment</p>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div
-        v-for="movie in movies"
-        :key="movie.id"
+        v-for="anime in animes"
+        :key="anime.id"
         class="card overflow-hidden hover:shadow-lg transition cursor-pointer"
-        @click="goToMovie(movie.id)"
+        @click="navigateTo(`/movies/${anime.id}`)"
       >
-        <div
-          v-if="movie.poster_path"
-          class="relative overflow-hidden bg-slate-700 h-64"
-        >
+        <div v-if="anime.imageUrl" class="relative overflow-hidden bg-slate-700 h-64">
           <img
-            :src="`https://image.tmdb.org/t/p/w300${movie.poster_path}`"
-            :alt="movie.title"
+            :src="anime.imageUrl"
+            :alt="anime.title"
             class="w-full h-full object-cover hover:scale-110 transition"
           />
         </div>
-        <div
-          v-else
-          class="bg-slate-700 h-64 flex items-center justify-center text-5xl"
-        >
-          🎬
+        <div v-else class="bg-slate-700 h-64 flex items-center justify-center text-5xl">
+          🎌
         </div>
         <div class="p-4">
-          <h3 class="font-bold truncate">{{ movie.title }}</h3>
-          <p class="text-sm text-slate-400">
-            {{
-              movie.release_date
-                ? new Date(movie.release_date).getFullYear()
-                : "-"
-            }}
+          <h3 class="font-bold truncate">{{ anime.title }}</h3>
+          <p class="text-sm text-slate-400 truncate">
+            {{ anime.titleEnglish || anime.status || "Anime" }}
           </p>
-          <p class="text-xs text-slate-500">
-            ⭐ {{ (movie.vote_average || 0).toFixed(1) }}
+          <p v-if="anime.score" class="text-xs text-yellow-400 mt-1">
+            ⭐ {{ anime.score.toFixed(1) }}/10
           </p>
         </div>
       </div>
@@ -61,24 +47,21 @@
 </template>
 
 <script setup lang="ts">
-const auth = useAuth();
-const { get } = useApi();
-
-const movies = ref([]);
+const config = useRuntimeConfig();
+const animes = ref<any[]>([]);
 const isLoading = ref(true);
 
 onMounted(async () => {
   try {
-    const response = await get("/tmdb/popular");
-    movies.value = response.data.results || [];
+    const data = await $fetch<any[]>("/animes", {
+      baseURL: config.public.apiBase,
+    });
+    animes.value = Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Erreur lors du chargement des films:", error);
+    console.error("Erreur chargement catalogue:", error);
+    animes.value = [];
   } finally {
     isLoading.value = false;
   }
 });
-
-const goToMovie = (id: number) => {
-  navigateTo(`/movies/${id}`);
-};
 </script>

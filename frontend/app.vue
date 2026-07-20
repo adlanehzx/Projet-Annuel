@@ -27,7 +27,7 @@
             >Collections</NuxtLink
           >
           <NuxtLink to="/movies" class="hover:text-primary transition"
-            >Films</NuxtLink
+            >Animes</NuxtLink
           >
           <NuxtLink
             v-if="auth.isAuthenticated.value"

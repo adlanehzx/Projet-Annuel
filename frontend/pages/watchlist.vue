@@ -7,7 +7,7 @@
           to="/movies/search"
           class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
         >
-          + Ajouter un film
+          + Ajouter un anime
         </NuxtLink>
       </div>
 
@@ -57,7 +57,7 @@
           >
             <img
               v-if="item.posterPath"
-              :src="`https://image.tmdb.org/t/p/w342${item.posterPath}`"
+              :src="item.posterPath"
               :alt="item.title"
               class="w-full h-full object-cover group-hover:scale-105 transition"
             />
@@ -80,20 +80,20 @@
           >
             {{ item.title }}
           </h3>
-          <p class="text-sm text-slate-400">TMDB ID: {{ item.tmdbId }}</p>
+          <p class="text-sm text-slate-400">Anime ID: {{ item.animeId }}</p>
         </div>
       </div>
 
       <!-- Empty state -->
       <div v-else-if="!loading" class="text-center py-12">
         <p class="text-slate-400 text-lg mb-4">
-          Aucun film pour cette catégorie
+          Aucun anime pour cette catégorie
         </p>
         <NuxtLink
           to="/movies/search"
           class="inline-block bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
         >
-          Découvrir des films
+          Découvrir des animes
         </NuxtLink>
       </div>
     </div>
@@ -118,7 +118,7 @@
             <div class="flex gap-6 p-6">
               <img
                 v-if="selectedItem.posterPath"
-                :src="`https://image.tmdb.org/t/p/w342${selectedItem.posterPath}`"
+                :src="selectedItem.posterPath"
                 :alt="selectedItem.title"
                 class="w-32 h-48 rounded object-cover flex-shrink-0"
               />
@@ -145,7 +145,7 @@
 
                 <div class="flex gap-3">
                   <NuxtLink
-                    :to="`/movies/${selectedItem.tmdbId}`"
+                    :to="`/movies/${selectedItem.animeId}`"
                     class="flex-1 bg-amber-500 hover:bg-amber-600 text-center px-4 py-2 rounded font-semibold transition"
                   >
                     Détail & Avis
@@ -169,9 +169,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useWatchlist } from "~/composables/useWatchlist";
-import { useRouter } from "vue-router";
 
-const router = useRouter();
 const {
   watchlist,
   loading,

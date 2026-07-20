@@ -3,9 +3,9 @@
     <!-- Hero Section -->
     <div class="max-w-7xl mx-auto px-4 py-20">
       <div class="text-center mb-16">
-        <h1 class="text-5xl font-bold mb-4">🎬 CineTrack</h1>
+        <h1 class="text-5xl font-bold mb-4">� AnimeTrack</h1>
         <p class="text-2xl text-slate-400 mb-8">
-          Votre application de suivi cinématographique style Letterboxd
+          Votre application de suivi d'animes
         </p>
         <div
           v-if="!auth.isAuthenticated.value"
@@ -35,7 +35,7 @@
             to="/movies/search"
             class="bg-slate-700 hover:bg-slate-600 px-8 py-3 rounded-lg font-semibold transition text-lg"
           >
-            Découvrir des films
+            Découvrir des animes
           </NuxtLink>
         </div>
       </div>
@@ -46,7 +46,7 @@
           <div class="text-4xl mb-3">🔍</div>
           <h3 class="text-xl font-bold mb-2">Rechercher</h3>
           <p class="text-slate-400">
-            Explorez des millions de films via l'API TMDB
+            Explorez le catalogue d'animes local
           </p>
         </div>
 
@@ -60,13 +60,13 @@
           <div class="text-4xl mb-3">⭐</div>
           <h3 class="text-xl font-bold mb-2">Noter & Commenter</h3>
           <p class="text-slate-400">
-            Notez vos films 0-10 et partagez vos avis
+            Notez vos animes 0-10 et partagez vos avis
           </p>
         </div>
 
         <div class="bg-slate-800 rounded-lg p-6 border border-slate-700">
           <div class="text-4xl mb-3">📚</div>
-          <h3 class="text-xl font-bold mb-2">Collections</h3>
+          <h3 class="text-xl font-bold mb-2">Listes</h3>
           <p class="text-slate-400">
             Créez des listes thématiques personnalisées
           </p>
@@ -89,9 +89,9 @@
           </div>
           <div>
             <div class="text-3xl font-bold text-amber-500 mb-2">2</div>
-            <h3 class="font-bold mb-2">Chercher des films</h3>
+            <h3 class="font-bold mb-2">Chercher des animes</h3>
             <p class="text-slate-400">
-              Parcourez la base de données complète de TMDB
+              Parcourez le catalogue local de 125+ animes
             </p>
           </div>
           <div>

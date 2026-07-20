@@ -18,8 +18,8 @@
           <!-- Poster -->
           <div class="flex-shrink-0">
             <img
-              v-if="movie.poster_path"
-              :src="`https://image.tmdb.org/t/p/w342${movie.poster_path}`"
+              v-if="movie.imageUrl"
+              :src="movie.imageUrl"
               :alt="movie.title"
               class="w-48 rounded-lg shadow-lg"
             />
@@ -36,8 +36,8 @@
             <h1 class="text-4xl font-bold mb-2">{{ movie.title }}</h1>
             <p class="text-slate-400 mb-4">
               {{
-                movie.release_date
-                  ? new Date(movie.release_date).getFullYear()
+                movie.airedFrom
+                  ? new Date(movie.airedFrom).getFullYear()
                   : "Année inconnue"
               }}
             </p>
@@ -46,10 +46,10 @@
             <div class="mb-6">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-2xl font-bold text-amber-500">{{
-                  (movie.vote_average / 2).toFixed(1)
+                  movie.score?.toFixed(1) || "-"
                 }}</span>
                 <span class="text-slate-400"
-                  >/5 ({{ movie.vote_count }} votes)</span
+                  >/10</span
                 >
               </div>
               <div class="flex gap-1">
@@ -58,7 +58,7 @@
                   :key="i"
                   :class="[
                     'text-xl',
-                    i <= Math.round(movie.vote_average / 2)
+                    i <= Math.round((movie.score || 0) / 2)
                       ? 'text-amber-500'
                       : 'text-slate-600',
                   ]"
@@ -68,18 +68,20 @@
             </div>
 
             <!-- Overview -->
-            <p class="text-slate-300 mb-6 line-clamp-4">{{ movie.overview }}</p>
+            <p class="text-slate-300 mb-6 line-clamp-4">
+              {{ movie.synopsis || "Synopsis indisponible" }}
+            </p>
 
             <!-- Genres -->
             <div class="mb-6">
               <p class="text-slate-400 text-sm mb-2">Genres</p>
               <div class="flex flex-wrap gap-2">
                 <span
-                  v-for="genre in movie.genres"
-                  :key="genre.id"
+                  v-for="item in movie.genres"
+                  :key="item.genre.id"
                   class="bg-slate-700 px-3 py-1 rounded-full text-sm"
                 >
-                  {{ genre.name }}
+                  {{ item.genre.name }}
                 </span>
               </div>
             </div>
@@ -186,7 +188,7 @@
       </div>
 
       <div v-else-if="!loading" class="text-center py-12">
-        <p class="text-red-400">Film non trouvé</p>
+        <p class="text-red-400">Anime non trouvé</p>
       </div>
     </div>
   </div>
@@ -195,16 +197,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useTmdb } from "~/composables/useTmdb";
+import { useAnimes } from "~/composables/useAnimes";
 import { useWatchlist } from "~/composables/useWatchlist";
 import { useReviews } from "~/composables/useReviews";
 
 const route = useRoute();
 const router = useRouter();
-const tmdbId = parseInt(route.params.tmdbId as string);
+const animeId = parseInt(route.params.tmdbId as string);
 
-const { getMovieDetails } = useTmdb();
-const { getWatchlistItem } = useWatchlist();
+const { getAnimeDetails } = useAnimes();
+const { fetchWatchlist, getWatchlistItem } = useWatchlist();
 const { getReview, getMovieReviews, createOrUpdateReview, deleteReview } =
   useReviews();
 
@@ -217,23 +219,20 @@ const reviewLoading = ref(false);
 
 onMounted(async () => {
   try {
-    // Get movie details from TMDB
-    movie.value = await getMovieDetails(tmdbId);
+    await fetchWatchlist();
+    movie.value = await getAnimeDetails(animeId);
 
-    // Get watchlist item
-    watchlistItem.value = getWatchlistItem.value(tmdbId);
+    watchlistItem.value = getWatchlistItem.value(animeId);
     if (!watchlistItem.value) {
       await router.push("/watchlist");
       return;
     }
 
-    // Get my review
     const myReviewData = await getReview(watchlistItem.value.id);
     if (myReviewData) {
       myReview.value = myReviewData;
     }
 
-    // Get community reviews
     communityReviews.value = await getMovieReviews(watchlistItem.value.id);
   } catch (error) {
     console.error("Erreur:", error);
@@ -260,7 +259,6 @@ const saveReview = async () => {
       myReview.value.rating,
       myReview.value.comment,
     );
-    // Reload community reviews
     communityReviews.value = await getMovieReviews(watchlistItem.value.id);
   } catch (e) {
     console.error("Erreur:", e);

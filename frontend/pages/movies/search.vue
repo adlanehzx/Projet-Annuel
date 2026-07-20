@@ -1,13 +1,13 @@
 <template>
   <main class="max-w-7xl mx-auto px-4 py-12">
-    <h1 class="text-3xl font-bold mb-8">Rechercher un film</h1>
+    <h1 class="text-3xl font-bold mb-8">Rechercher un anime</h1>
 
     <div class="card p-6 mb-8">
       <div class="flex gap-4">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Chercher un film..."
+          placeholder="Chercher un anime..."
           class="input flex-1"
           @keyup.enter="handleSearch"
         />
@@ -27,19 +27,19 @@
     </div>
 
     <div v-else-if="results.length === 0 && searched" class="text-center py-12">
-      <p class="text-slate-400">Aucun film trouvé</p>
+      <p class="text-slate-400">Aucun anime trouvé</p>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div
-        v-for="movie in results"
-        :key="movie.id"
+        v-for="anime in results"
+        :key="anime.id"
         class="card overflow-hidden hover:shadow-lg transition group"
       >
-        <div v-if="movie.poster_path" class="relative overflow-hidden">
+        <div v-if="anime.imageUrl" class="relative overflow-hidden">
           <img
-            :src="`https://image.tmdb.org/t/p/w300${movie.poster_path}`"
-            :alt="movie.title"
+            :src="anime.imageUrl"
+            :alt="anime.title"
             class="w-full h-64 object-cover group-hover:scale-105 transition"
           />
         </div>
@@ -51,25 +51,25 @@
         </div>
 
         <div class="p-4">
-          <h3 class="font-bold truncate">{{ movie.title }}</h3>
+          <h3 class="font-bold truncate">{{ anime.title }}</h3>
           <p class="text-sm text-slate-400">
-            {{ movie.release_date?.split("-")[0] }}
+            {{ anime.titleEnglish || anime.status || "Anime" }}
           </p>
-          <div v-if="movie.vote_average" class="text-xs text-yellow-400 mt-2">
-            ⭐ {{ movie.vote_average.toFixed(1) }}/10
+          <div v-if="anime.score" class="text-xs text-yellow-400 mt-2">
+            ⭐ {{ anime.score.toFixed(1) }}/10
           </div>
 
           <button
-            @click="addToWatchlist(movie)"
-            :disabled="isInWatchlist(movie.id) || addingMovieId === movie.id"
+            @click="addToWatchlist(anime)"
+            :disabled="isInWatchlist(anime.id) || addingAnimeId === anime.id"
             :class="[
               'w-full mt-4 py-2 rounded font-semibold transition',
-              isInWatchlist(movie.id)
+              isInWatchlist(anime.id)
                 ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
                 : 'bg-amber-500 hover:bg-amber-600 text-slate-900',
             ]"
           >
-            {{ isInWatchlist(movie.id) ? "✓ Dans ma watchlist" : "+ Ajouter" }}
+            {{ isInWatchlist(anime.id) ? "✓ Dans ma watchlist" : "+ Ajouter" }}
           </button>
         </div>
       </div>
@@ -78,18 +78,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useApi } from "~/composables/useApi";
+import { ref } from "vue";
+import { useAnimes } from "~/composables/useAnimes";
 import { useWatchlist } from "~/composables/useWatchlist";
 
-const { get } = useApi();
+const { searchAnimes } = useAnimes();
 const { watchlist, addToWatchlist: addItemToWatchlist } = useWatchlist();
 const searchQuery = ref("");
 const results = ref<any[]>([]);
 const isLoading = ref(false);
 const error = ref("");
 const searched = ref(false);
-const addingMovieId = ref<number | null>(null);
+const addingAnimeId = ref<number | null>(null);
 
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) {
@@ -102,13 +102,10 @@ const handleSearch = async () => {
     error.value = "";
     searched.value = true;
 
-    const response = await get(
-      `/tmdb/search?q=${encodeURIComponent(searchQuery.value)}`,
-    );
-    results.value = response.data.results || [];
+    results.value = await searchAnimes(searchQuery.value);
 
     if (results.value.length === 0) {
-      error.value = "Aucun film trouvé";
+      error.value = "Aucun anime trouvé";
     }
   } catch (err: any) {
     error.value = "Erreur lors de la recherche";
@@ -118,19 +115,19 @@ const handleSearch = async () => {
   }
 };
 
-const isInWatchlist = (tmdbId: number) => {
-  return watchlist.value.some((item: any) => item.tmdbId === tmdbId);
+const isInWatchlist = (animeId: number) => {
+  return watchlist.value.some((item: any) => item.animeId === animeId);
 };
 
-const addToWatchlist = async (movie: any) => {
+const addToWatchlist = async (anime: any) => {
   try {
-    addingMovieId.value = movie.id;
-    await addItemToWatchlist(movie.id, movie.title, movie.poster_path);
+    addingAnimeId.value = anime.id;
+    await addItemToWatchlist(anime.id);
   } catch (err: any) {
     error.value = err.response?.data?.error || "Erreur lors de l'ajout";
     console.error(err);
   } finally {
-    addingMovieId.value = null;
+    addingAnimeId.value = null;
   }
 };
 </script>

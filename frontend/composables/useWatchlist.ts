@@ -22,17 +22,11 @@ export const useWatchlist = () => {
     }
   };
 
-  const addToWatchlist = async (
-    tmdbId: number,
-    title: string,
-    posterPath?: string,
-  ) => {
+  const addToWatchlist = async (animeId: number) => {
     try {
       loading.value = true;
       const response = await api.post("/watchlist", {
-        tmdbId,
-        title,
-        posterPath,
+        animeId,
         status: "TO_WATCH",
       });
       watchlist.value.unshift(response.data);
@@ -69,12 +63,12 @@ export const useWatchlist = () => {
     }
   };
 
-  const isInWatchlist = computed(() => (tmdbId: number) => {
-    return watchlist.value.some((item: any) => item.tmdbId === tmdbId);
+  const isInWatchlist = computed(() => (animeId: number) => {
+    return watchlist.value.some((item: any) => item.animeId === animeId);
   });
 
-  const getWatchlistItem = computed(() => (tmdbId: number) => {
-    return watchlist.value.find((item: any) => item.tmdbId === tmdbId);
+  const getWatchlistItem = computed(() => (animeId: number) => {
+    return watchlist.value.find((item: any) => item.animeId === animeId);
   });
 
   return {
