@@ -51,19 +51,21 @@ model OAuthProvider {
 // Watchlist avec status
 model Watchlist {
   id    Int     @id @default(autoincrement())
-  tmdbId Int @unique
+  animeId Int @map("anime_id")
   title String
   posterPath String?
   status WatchStatus @default(TO_WATCH) // TO_WATCH, WATCHING, COMPLETED
   userId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
   reviews Review[]
   inCollections CollectionItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, tmdbId])
+  @@unique([userId, animeId])
   @@index([userId])
+  @@index([animeId])
 }
 
 enum WatchStatus {
@@ -168,6 +170,7 @@ model Anime {
   updatedAt   DateTime      @updatedAt @map("updated_at")
   genres      AnimeGenre[]
   listItems   ListAnime[]
+  watchlistItems Watchlist[]
 
   @@index([score])
   @@index([rank])

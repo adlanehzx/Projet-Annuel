@@ -40,9 +40,10 @@ router.get("/:username", async (req: Request, res: Response) => {
           include: {
             watchlist: {
               select: {
-                tmdbId: true,
+                animeId: true,
                 title: true,
                 posterPath: true,
+                anime: true,
               },
             },
           },
@@ -111,9 +112,10 @@ router.get("/:username/reviews", async (req: Request, res: Response) => {
       include: {
         watchlist: {
           select: {
-            tmdbId: true,
+            animeId: true,
             title: true,
             posterPath: true,
+            anime: true,
           },
         },
       },

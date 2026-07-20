@@ -114,7 +114,7 @@ export const getAdvancedStatistics = async (userId: number) => {
     where: { userId },
     include: {
       watchlist: {
-        select: { title: true },
+        select: { title: true, animeId: true },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -141,7 +141,7 @@ export const getAdvancedStatistics = async (userId: number) => {
   const topRated = ratedItems
     .map((w) => ({
       title: w.title,
-      tmdbId: w.tmdbId,
+      animeId: w.animeId,
       rating: w.reviews[0]?.rating ?? 0,
     }))
     .sort((a, b) => b.rating - a.rating)
@@ -151,7 +151,7 @@ export const getAdvancedStatistics = async (userId: number) => {
   const worstRated = ratedItems
     .map((w) => ({
       title: w.title,
-      tmdbId: w.tmdbId,
+      animeId: w.animeId,
       rating: w.reviews[0]?.rating ?? 0,
     }))
     .sort((a, b) => a.rating - b.rating)
@@ -235,7 +235,7 @@ export const getRecommendations = async (userId: number) => {
   const recommendations = topRatedAnimes.map((anime) => ({
     based_on_title: anime.title,
     based_on_rating: anime.reviews[0]?.rating,
-    tmdbId: anime.tmdbId,
+    animeId: anime.animeId,
     message: "Les animes similaires à celui-ci pourraient vous plaire",
   }));
 
