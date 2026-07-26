@@ -39,19 +39,30 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const applySession = (data: { token: string; user: any }) => {
+    token.value = data.token;
+    user.value = data.user;
+
+    if (process.client) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+  };
+
+  const login = async (
+    email: string,
+    password: string,
+    totpToken?: string,
+  ) => {
     isLoading.value = true;
     error.value = "";
     try {
-      const response = await post("/auth/login", { email, password });
-      token.value = response.data.token;
-      user.value = response.data.user;
-
-      if (process.client) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-      }
-
+      const response = await post("/auth/login", {
+        email,
+        password,
+        totpToken,
+      });
+      applySession(response.data);
       return response.data;
     } catch (err: any) {
       error.value = err.response?.data?.error || "Erreur de connexion";
@@ -59,6 +70,60 @@ export const useAuth = () => {
     } finally {
       isLoading.value = false;
     }
+  };
+
+  // idToken émis côté client par Google Identity Services
+  const loginWithGoogle = async (idToken: string) => {
+    isLoading.value = true;
+    error.value = "";
+    try {
+      const response = await post("/auth/oauth/google", { idToken });
+      applySession(response.data);
+      return response.data;
+    } catch (err: any) {
+      error.value =
+        err.response?.data?.error || "Erreur de connexion avec Google";
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // code d'autorisation reçu de GitHub après redirection
+  const loginWithGithub = async (code: string) => {
+    isLoading.value = true;
+    error.value = "";
+    try {
+      const response = await post("/auth/oauth/github", { code });
+      applySession(response.data);
+      return response.data;
+    } catch (err: any) {
+      error.value =
+        err.response?.data?.error || "Erreur de connexion avec GitHub";
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const get2FAStatus = async () => {
+    const response = await get("/auth/2fa/status");
+    return response.data.totpEnabled as boolean;
+  };
+
+  const setup2FA = async () => {
+    const response = await post("/auth/2fa/setup", {});
+    return response.data as { secret: string; qrCode: string };
+  };
+
+  const enable2FA = async (secret: string, totpToken: string) => {
+    const response = await post("/auth/2fa/enable", { secret, totpToken });
+    return response.data;
+  };
+
+  const disable2FA = async (password: string) => {
+    const response = await post("/auth/2fa/disable", { password });
+    return response.data;
   };
 
   const logout = () => {
@@ -80,6 +145,12 @@ export const useAuth = () => {
     isAuthenticated,
     register,
     login,
+    loginWithGoogle,
+    loginWithGithub,
     logout,
+    get2FAStatus,
+    setup2FA,
+    enable2FA,
+    disable2FA,
   };
 };

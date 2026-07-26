@@ -16,6 +16,7 @@
               class="input"
               placeholder="votre@email.com"
               required
+              :disabled="requiresTwoFactor"
             />
           </div>
 
@@ -26,6 +27,23 @@
               type="password"
               class="input"
               placeholder="••••••••"
+              required
+              :disabled="requiresTwoFactor"
+            />
+          </div>
+
+          <div v-if="requiresTwoFactor">
+            <label class="block text-sm font-medium mb-2"
+              >Code de vérification (2FA)</label
+            >
+            <input
+              v-model="form.totpToken"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              class="input"
+              placeholder="123456"
+              maxlength="6"
               required
             />
           </div>
@@ -46,6 +64,27 @@
           </button>
         </form>
 
+        <div
+          v-if="!requiresTwoFactor"
+          class="mt-6 space-y-3"
+        >
+          <div class="flex items-center gap-3">
+            <div class="h-px bg-slate-700 flex-1" />
+            <span class="text-xs text-slate-500">ou</span>
+            <div class="h-px bg-slate-700 flex-1" />
+          </div>
+
+          <div ref="googleButton" class="flex justify-center" />
+
+          <button
+            type="button"
+            class="btn btn-secondary w-full"
+            @click="handleGithubLogin"
+          >
+            Continuer avec GitHub
+          </button>
+        </div>
+
         <div class="mt-6 pt-6 border-t border-slate-700">
           <p class="text-slate-400 text-sm">
             Pas encore de compte?
@@ -60,19 +99,48 @@
 </template>
 
 <script setup lang="ts">
-const { login, isLoading, error: authError } = useAuth();
+const { login, loginWithGoogle, loginWithGithub, isLoading, error: authError } =
+  useAuth();
+const config = useRuntimeConfig();
 
 const form = reactive({
   email: "",
   password: "",
+  totpToken: "",
 });
 
 const error = ref("");
+const requiresTwoFactor = ref(false);
+const googleButton = ref<HTMLElement | null>(null);
 
 const handleLogin = async () => {
   try {
     error.value = "";
-    await login(form.email, form.password);
+    await login(form.email, form.password, form.totpToken || undefined);
+    await navigateTo("/");
+  } catch (err: any) {
+    if (err.response?.data?.requiresTwoFactor) {
+      requiresTwoFactor.value = true;
+      error.value = "Entrez le code généré par votre application 2FA";
+    } else {
+      error.value = authError.value;
+    }
+  }
+};
+
+const handleGithubLogin = () => {
+  const params = new URLSearchParams({
+    client_id: config.public.githubClientId as string,
+    redirect_uri: config.public.githubRedirectUri as string,
+    scope: "read:user user:email",
+  });
+  window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+};
+
+const handleGoogleCredential = async (response: { credential: string }) => {
+  try {
+    error.value = "";
+    await loginWithGoogle(response.credential);
     await navigateTo("/");
   } catch (err) {
     error.value = authError.value;
@@ -84,6 +152,28 @@ const auth = useAuth();
 onMounted(() => {
   if (auth.isAuthenticated.value) {
     navigateTo("/");
+    return;
   }
+
+  if (!config.public.googleClientId) return;
+
+  const script = document.createElement("script");
+  script.src = "https://accounts.google.com/gsi/client";
+  script.async = true;
+  script.onload = () => {
+    const google = (window as any).google;
+    if (!google || !googleButton.value) return;
+
+    google.accounts.id.initialize({
+      client_id: config.public.googleClientId,
+      callback: handleGoogleCredential,
+    });
+    google.accounts.id.renderButton(googleButton.value, {
+      theme: "filled_black",
+      size: "large",
+      width: 320,
+    });
+  };
+  document.head.appendChild(script);
 });
 </script>
