@@ -6,9 +6,7 @@
     <div v-else-if="!anime" style="text-align:center;padding:64px;color:var(--color-accent-primary)">Anime introuvable</div>
 
     <template v-else>
-      <!-- Header desktop -->
       <div style="display:flex;gap:36px;align-items:flex-start">
-        <!-- Poster -->
         <div style="position:relative;width:220px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--bg-elevated);border:1px solid var(--border)">
           <img v-if="anime.imageUrl" :src="anime.imageUrl" :alt="anime.title" style="width:100%;height:100%;object-fit:cover" />
           <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px">🎌</div>
@@ -24,12 +22,10 @@
           />
         </div>
 
-        <!-- Infos -->
         <div style="flex:1;min-width:0">
           <h1 style="font-family:var(--font-display);font-weight:700;font-size:34px;margin:0 0 8px;color:var(--text-primary)">{{ anime.title }}</h1>
           <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">{{ metaLine }}</div>
 
-          <!-- Genres -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
             <span
               v-for="item in anime.genres"
@@ -38,13 +34,11 @@
             >{{ item.genre?.name ?? item }}</span>
           </div>
 
-          <!-- Note -->
           <div style="display:flex;align-items:baseline;gap:10px;margin-top:20px">
             <span style="font-family:var(--font-display);font-weight:700;font-size:42px;line-height:1;color:var(--text-primary)">{{ anime.score?.toFixed(1) ?? '—' }}</span>
             <span style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">/10 · Jikan score</span>
           </div>
 
-          <!-- CTA Watchlist -->
           <div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;align-items:center;position:relative">
             <button
               @click="requireAuth(() => statusOpen = !statusOpen)"
@@ -55,7 +49,6 @@
               style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-family:var(--font-body);font-weight:500;font-size:14px;cursor:pointer"
             >☆ Noter</button>
 
-            <!-- Dropdown statuts -->
             <Transition name="at-fade">
               <div v-if="statusOpen" style="position:absolute;left:0;top:54px;z-index:40;min-width:240px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
                 <button v-for="opt in statusOpts" :key="opt.value" @click="pickStatus(opt.value)" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;background:none;border:none;border-radius:6px;font-family:var(--font-body);font-size:14px;color:var(--text-primary);cursor:pointer">
@@ -70,10 +63,8 @@
         </div>
       </div>
 
-      <!-- Synopsis -->
       <p style="margin-top:26px;max-width:720px;font-size:15px;line-height:1.65;color:var(--text-secondary)">{{ anime.synopsis || 'Synopsis indisponible.' }}</p>
 
-      <!-- Formulaire review -->
       <Transition name="at-fade">
         <div v-if="reviewOpen" style="margin-top:28px;max-width:760px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:20px">
           <h3 style="font-family:var(--font-display);font-weight:700;font-size:18px;margin:0 0 14px;color:var(--text-primary)">{{ myReview.id ? 'Mon avis' : 'Écrire un avis' }}</h3>
@@ -91,7 +82,6 @@
         </div>
       </Transition>
 
-      <!-- Reviews -->
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:36px 0 14px;color:var(--text-primary)">Reviews ({{ communityReviews.length }})</h2>
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
         <div v-for="review in communityReviews" :key="review.id" style="display:flex;gap:12px;padding:16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px">

@@ -4,7 +4,6 @@
     <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
     <template v-else>
-      <!-- Header profil -->
       <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
         <div style="width:72px;height:72px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;flex-shrink:0">
           {{ (user?.username || '?').slice(0, 2).toUpperCase() }}
@@ -16,7 +15,6 @@
         <NuxtLink to="/settings" style="padding:9px 18px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-weight:500;font-size:14px;text-decoration:none">Paramètres</NuxtLink>
       </div>
 
-      <!-- Stats -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:16px">
         <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center">
           <div style="font-family:var(--font-mono);font-size:26px;line-height:1.2;color:var(--text-primary)">{{ stats.animeCount }}</div>
@@ -36,7 +34,6 @@
         </div>
       </div>
 
-      <!-- Répartition genre -->
       <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px">
         <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 18px;color:var(--text-primary)">Top genres</h2>
         <div style="display:flex;flex-direction:column;gap:10px">
@@ -50,7 +47,6 @@
         </div>
       </div>
 
-      <!-- Reviews récentes -->
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:26px 0 12px;color:var(--text-primary)">Reviews récentes</h2>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div v-for="review in recentReviews" :key="review.id" style="display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px">

@@ -19,11 +19,9 @@
         @keydown.enter="navigateTo(`/animes/${item.anime.id}`)"
         style="cursor:pointer;border-radius:8px"
       >
-        <!-- Poster avec score de reco -->
         <div style="position:relative;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--bg-elevated);border:1px solid var(--border)">
           <img v-if="item.anime.imageUrl" :src="item.anime.imageUrl" :alt="item.anime.title" style="width:100%;height:100%;object-fit:cover;transition:opacity 0.2s" />
           <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎌</div>
-          <!-- Badge score reco -->
           <div style="position:absolute;top:8px;right:8px;background:var(--color-accent-primary);color:#fff;padding:4px 10px;border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;opacity:0.95">
             {{ (item.score * 100).toFixed(0) }}%
           </div>

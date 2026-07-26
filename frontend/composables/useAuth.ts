@@ -4,7 +4,6 @@ export const useAuth = () => {
   const isLoading = useState("auth.loading", () => false);
   const error = useState("auth.error", () => "");
 
-  // Charger depuis localStorage au démarrage
   if (process.client) {
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -29,7 +28,6 @@ export const useAuth = () => {
         username,
         password,
       });
-      // Auto login après register
       return await login(email, password);
     } catch (err: any) {
       error.value = err.response?.data?.error || "Erreur lors de l'inscription";
@@ -72,7 +70,6 @@ export const useAuth = () => {
     }
   };
 
-  // idToken émis côté client par Google Identity Services
   const loginWithGoogle = async (idToken: string) => {
     isLoading.value = true;
     error.value = "";
@@ -89,7 +86,6 @@ export const useAuth = () => {
     }
   };
 
-  // code d'autorisation reçu de GitHub après redirection
   const loginWithGithub = async (code: string) => {
     isLoading.value = true;
     error.value = "";

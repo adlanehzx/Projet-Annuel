@@ -1,7 +1,6 @@
 <template>
   <div :class="isDark ? 'dark' : ''" style="min-height:100vh;background:var(--bg);color:var(--text-primary);font-family:var(--font-body)">
 
-    <!-- ══════════ NON CONNECTÉ · landing ══════════ -->
     <template v-if="!auth.isAuthenticated.value">
       <header :style="landingHeaderVars" style="background:var(--bg-elevated);color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;height:64px;position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:10px;text-decoration:none">
@@ -17,10 +16,8 @@
       <NuxtPage />
     </template>
 
-    <!-- ══════════ CONNECTÉ · DESKTOP · sidebar rétractable ══════════ -->
     <div v-else-if="!isMobile" style="display:flex;min-height:100vh">
       <aside :style="`width:${collapsed ? '72px' : '238px'};flex-shrink:0;background:var(--bg-elevated);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:${collapsed ? '22px 12px' : '22px 16px'};gap:18px;overflow-y:auto;overflow-x:hidden;transition:width 180ms ease-out;height:100vh;position:sticky;top:0;z-index:40`">
-        <!-- En-tête sidebar -->
         <div :style="`display:flex;align-items:center;justify-content:${collapsed ? 'center' : 'space-between'};gap:8px;flex-wrap:${collapsed ? 'wrap' : 'nowrap'}`">
           <NuxtLink to="/" aria-label="AnimeTrack — accueil" style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:0 4px">
             <BrandSeal :size="30" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
@@ -31,7 +28,6 @@
           </button>
         </div>
 
-        <!-- Groupes de navigation -->
         <div v-for="group in navGroups" :key="group.title">
           <div v-if="!collapsed" style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--text-secondary);padding:0 10px;margin-bottom:8px">{{ group.title }}</div>
           <div style="display:flex;flex-direction:column;gap:2px">
@@ -44,7 +40,6 @@
 
         <span style="flex:1"></span>
 
-        <!-- Compte -->
         <div :style="`display:flex;align-items:center;justify-content:${collapsed ? 'center' : 'flex-start'};gap:10px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:${collapsed ? 'wrap' : 'nowrap'}`">
           <div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;flex-shrink:0">{{ initials }}</div>
           <div v-if="!collapsed" style="flex:1;min-width:0">
@@ -65,7 +60,6 @@
       </main>
     </div>
 
-    <!-- ══════════ CONNECTÉ · MOBILE · topbar + tabs ══════════ -->
     <div v-else style="display:flex;flex-direction:column;min-height:100vh">
       <header style="height:56px;background:var(--bg-elevated);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:50">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:8px;text-decoration:none">
@@ -95,7 +89,8 @@
       </nav>
     </div>
 
-    <!-- Modale d'incitation à la connexion (globale) -->
+    <CookieConsentBanner />
+
     <AuthPromptModal />
   </div>
 </template>
@@ -131,11 +126,8 @@ onBeforeUnmount(() => {
   if (process.client) window.removeEventListener("resize", updateMobile);
 });
 
-// Fermer le menu avatar au changement de route
 watch(() => route.path, () => { avatarOpen.value = false; });
 
-// Sur la page d'accueil (hero toujours sombre), on fige la navbar en sombre
-// en redéfinissant localement les variables CSS : les enfants en héritent.
 const landingHeaderVars = computed(() =>
   route.path === "/"
     ? "--bg-elevated:#14171F;--text-primary:#F1F0EC;--text-secondary:#C9CAD1;--text-tertiary:#9C9AA6;--bg-input:rgba(255,255,255,0.08);--border:rgba(255,255,255,0.18);"

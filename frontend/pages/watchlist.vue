@@ -2,7 +2,6 @@
   <div style="max-width:1200px;margin:0 auto;padding:24px 24px 48px;width:100%">
     <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">Ma Watchlist</h1>
 
-    <!-- Tabs -->
     <div style="display:flex;gap:2px;border-bottom:1px solid var(--border);overflow-x:auto;margin-bottom:0">
       <button
         v-for="tab in tabs"
@@ -12,10 +11,8 @@
       >{{ tab.label }} ({{ countByStatus(tab.status) }})</button>
     </div>
 
-    <!-- Loading -->
     <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-    <!-- Etat vide -->
     <div v-else-if="filteredWatchlist.length === 0" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center">
       <BrandSeal :size="72" format="svg" style="opacity:0.25" />
       <div style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">Aucun anime ici</div>
@@ -23,7 +20,6 @@
       <NuxtLink to="/animes" style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none">Parcourir le catalogue</NuxtLink>
     </div>
 
-    <!-- Grille -->
     <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:20px;margin-top:22px">
       <div v-for="item in filteredWatchlist" :key="item.id">
         <div
@@ -40,7 +36,6 @@
               v-if="item.status === 'COMPLETED'"
               style="position:absolute;inset:0;pointer-events:none;z-index:1;background:rgba(0,0,0,0.24)"
             />
-            <!-- Sceau hanko si Terminé -->
             <BrandSeal
               v-if="item.status === 'COMPLETED'"
               :size="56"
@@ -54,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Modal détail -->
     <Teleport to="body">
       <Transition name="at-fade">
         <div v-if="selectedItem" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50" @click.self="selectedItem=null">

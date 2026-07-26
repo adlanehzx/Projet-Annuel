@@ -21,7 +21,6 @@
       <p v-if="loadingStatus" style="font-size:13px;color:var(--text-secondary)">Chargement...</p>
 
       <template v-else>
-        <!-- 2FA déjà activée -->
         <div v-if="twoFactorEnabled && !setupState" style="display:flex;flex-direction:column;gap:14px">
           <p style="font-size:14px;color:var(--text-secondary)">
             La 2FA est actuellement <strong style="color:#2ea043">activée</strong>.
@@ -43,7 +42,6 @@
           </button>
         </div>
 
-        <!-- 2FA désactivée, pas encore en cours de setup -->
         <div v-else-if="!twoFactorEnabled && !setupState" style="display:flex;flex-direction:column;gap:14px">
           <p style="font-size:14px;color:var(--text-secondary)">
             La 2FA est actuellement <strong style="color:var(--color-accent-primary)">désactivée</strong>.
@@ -58,7 +56,6 @@
           </button>
         </div>
 
-        <!-- Setup en cours: QR code + saisie du code -->
         <div v-else-if="setupState" style="display:flex;flex-direction:column;gap:14px">
           <p style="font-size:14px;color:var(--text-secondary)">
             Scannez ce QR code avec votre application d'authentification

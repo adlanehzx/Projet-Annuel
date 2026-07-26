@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100" role="img" aria-label="AnimeTrack maneki-neko seal">
+  <defs>
+    <filter id="hn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="0.7"></feDisplacementMap></filter>
+  </defs>
+  <g filter="url(#hn)" stroke="#D6432B" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="6" width="88" height="88" rx="11" stroke-width="4.5"></rect>
+    
+    <text x="23" y="28" font-family="&#39;Hiragino Mincho ProN&#39;,&#39;Yu Mincho&#39;,&#39;Noto Serif JP&#39;,serif" font-size="24" font-weight="700" fill="#D6432B" stroke="none" text-anchor="middle" dominant-baseline="middle">招</text>
+    <text x="78" y="28" font-family="&#39;Hiragino Mincho ProN&#39;,&#39;Yu Mincho&#39;,&#39;Noto Serif JP&#39;,serif" font-size="24" font-weight="700" fill="#D6432B" stroke="none" text-anchor="middle" dominant-baseline="middle">福</text>
+    
+    <path stroke-width="2.4" d="M37,51 C34,45 35,37 40,33 L38,21 L49,27.5 C52,26 55,26 58,27 L67,20 L68,32 C72,37 72,45 69,51 C64,59 42,59 37,51 Z"></path>
+    
+    <path stroke="none" fill="#D6432B" d="M37,31 L34,23 L44,28 C41,29 39,30 37,31 Z"></path>
+    
+    <path stroke-width="2" d="M42,42 Q45,38.5 48,42"></path>
+    <path stroke-width="2" d="M57,42 Q60,38.5 63,42"></path>
+    <ellipse cx="52.5" cy="46.5" rx="1.7" ry="1.3" fill="#D6432B" stroke="none"></ellipse>
+    <path stroke-width="1.8" d="M52.5,48 Q52.5,50.5 49.5,50.5 M52.5,48 Q52.5,50.5 55.5,50.5"></path>
+    <g stroke-width="1.5">
+      <line x1="39" y1="46" x2="31" y2="44"></line>
+      <line x1="39" y1="49" x2="31" y2="50"></line>
+      <line x1="66" y1="46" x2="74" y2="44"></line>
+      <line x1="66" y1="49" x2="74" y2="50"></line>
+    </g>
+    
+    <circle cx="27" cy="40" r="6" stroke-width="2.2"></circle>
+    <path stroke-width="1.4" d="M24.2,36.5 L24.7,40 M27.5,35.5 L27.5,39.5 M30.8,36.5 L30.3,40"></path>
+    <path stroke-width="2.2" d="M24,45 C22,54 23,62 28,68 M32,45.5 C31,52 31,58 33,63"></path>
+    
+    <path stroke-width="2.4" d="M38,57 C33,63 30,70 30,79 C30,83 31,86 33,88 M67,55 C71,61 73,68 73,74"></path>
+    <path stroke-width="2.4" d="M33,88 C40,89 48,89 54,88"></path>
+    
+    <path stroke-width="2.4" d="M42,57.5 Q52,63.5 63,56.5"></path>
+    <circle cx="52.5" cy="61.5" r="3" stroke-width="1.8"></circle>
+    <line x1="52.5" y1="61.5" x2="52.5" y2="64" stroke-width="1.2"></line>
+    
+    <ellipse cx="62" cy="76" rx="9.5" ry="11.5" stroke-width="2.4"></ellipse>
+    <path stroke-width="1.6" d="M56,69 Q62,66.5 68,69"></path>
+    <text x="62" y="79" font-family="&#39;Hiragino Mincho ProN&#39;,&#39;Yu Mincho&#39;,&#39;Noto Serif JP&#39;,serif" font-size="10" font-weight="700" fill="#D6432B" stroke="none" text-anchor="middle" dominant-baseline="middle">萬</text>
+    
+    <g stroke-width="1.6">
+      <path d="M82,40 Q83,43 86,44 Q83,45 82,48 Q81,45 78,44 Q81,43 82,40 Z"></path>
+      <path d="M85,55 Q85.7,57 87.5,57.7 Q85.7,58.4 85,60.4 Q84.3,58.4 82.5,57.7 Q84.3,57 85,55 Z"></path>
+      <path d="M18,62 Q18.7,64 20.5,64.7 Q18.7,65.4 18,67.4 Q17.3,65.4 15.5,64.7 Q17.3,64 18,62 Z"></path>
+    </g>
+  </g>
+</svg>

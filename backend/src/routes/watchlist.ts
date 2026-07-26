@@ -3,8 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// GET watchlist de l'utilisateur
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -21,8 +19,6 @@ router.get("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET watchlist filtrée par status
 router.get("/status/:status", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -40,8 +36,6 @@ router.get("/status/:status", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET détail d'une watchlist item
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const item = await prisma.watchlist.findUnique({
@@ -97,8 +91,6 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// PUT mettre à jour le status
 router.put("/:id/status", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -122,8 +114,6 @@ router.put("/:id/status", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// DELETE supprimer de la watchlist
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

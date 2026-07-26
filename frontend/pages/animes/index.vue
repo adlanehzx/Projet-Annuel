@@ -1,7 +1,6 @@
 <template>
   <div style="max-width:1200px;margin:0 auto;padding:22px 24px 48px;width:100%">
 
-    <!-- Barre : recherche + filtres + tri -->
     <div style="display:flex;gap:10px;margin-bottom:14px;position:relative;flex-wrap:wrap;align-items:center;z-index:20">
       <input
         v-model="search"
@@ -26,7 +25,6 @@
         <option value="rank">Trier : rang</option>
       </select>
 
-      <!-- Dropdown filtres (desktop) -->
       <Transition name="at-fade">
         <div v-if="filtersOpen && !isMobile" style="position:absolute;right:0;top:52px;z-index:46;width:340px;max-width:calc(100% - 4px);background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.18);padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -55,7 +53,6 @@
       </Transition>
     </div>
 
-    <!-- Chips filtres actifs -->
     <div v-if="nActiveFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
       <button
         v-for="chip in activeChips"
@@ -69,10 +66,8 @@
 
     <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">{{ filtered.length }} résultats</div>
 
-    <!-- Loading -->
     <div v-if="isLoading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-    <!-- Grille -->
     <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;margin-top:16px">
       <div
         v-for="anime in paged"
@@ -102,7 +97,6 @@
       </div>
     </div>
 
-    <!-- Pagination -->
     <div v-if="totalPages > 1" style="display:flex;justify-content:center;gap:8px;margin-top:30px">
       <button @click="currentPage--" :disabled="currentPage === 1" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">‹</button>
       <button
@@ -114,10 +108,8 @@
       <button @click="currentPage++" :disabled="currentPage === totalPages" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">›</button>
     </div>
 
-    <!-- Backdrop dropdown desktop -->
     <div v-if="filtersOpen && !isMobile" @click="filtersOpen = false" style="position:fixed;inset:0;z-index:45;background:transparent"></div>
 
-    <!-- Drawer filtres (mobile) -->
     <Transition name="at-fade">
       <div v-if="filtersOpen && isMobile" style="position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;padding:20px;overflow-y:auto">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">

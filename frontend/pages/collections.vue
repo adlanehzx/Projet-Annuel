@@ -11,12 +11,10 @@
         </button>
       </div>
 
-      <!-- Loading -->
       <div v-if="loading" class="text-center py-12">
         <p class="text-slate-400">Chargement...</p>
       </div>
 
-      <!-- Error -->
       <div
         v-if="error"
         class="bg-red-900 border border-red-700 text-red-100 p-4 rounded mb-6"
@@ -24,7 +22,6 @@
         {{ error }}
       </div>
 
-      <!-- Collections Grid -->
       <div
         v-if="!loading && collections.length > 0"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -38,7 +35,6 @@
           <div
             class="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 relative overflow-hidden"
           >
-            <!-- Collection cover with thumbnails -->
             <div
               v-if="collection.items.length > 0"
               class="grid grid-cols-2 gap-1 p-2"
@@ -74,7 +70,6 @@
         </NuxtLink>
       </div>
 
-      <!-- Empty state -->
       <div v-else-if="!loading" class="text-center py-12">
         <p class="text-slate-400 text-lg mb-4">
           Aucune collection pour le moment
@@ -88,7 +83,6 @@
       </div>
     </div>
 
-    <!-- Create Modal -->
     <Teleport to="body">
       <Transition name="fade">
         <div

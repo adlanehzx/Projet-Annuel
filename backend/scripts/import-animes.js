@@ -10,9 +10,6 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const LIBRETRANSLATE_URL =
   process.env.LIBRETRANSLATE_URL ?? "http://localhost:5000";
-
-// Traduit un texte anglais en français via LibreTranslate.
-// En cas d'échec (service indisponible, etc.), retourne le texte original.
 async function translateToFrench(text) {
   if (!text) return text;
   try {
@@ -39,9 +36,6 @@ function toDate(value) {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
-
-// Retire les mentions d'attribution ajoutées par MyAnimeList à la fin des synopsis,
-// ex: "[Written by MAL Rewrite]" ou "(Source: ...)".
 function cleanSynopsis(text) {
   if (!text) return text;
   return text

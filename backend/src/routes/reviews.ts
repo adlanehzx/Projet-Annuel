@@ -3,8 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// POST créer/mettre à jour une review
 router.post("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -37,8 +35,6 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET reviews d'un film
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
     const reviews = await prisma.review.findMany({
@@ -52,8 +48,6 @@ router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET ma review
 router.get("/:watchlistId", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -73,8 +67,6 @@ router.get("/:watchlistId", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// DELETE une review
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
