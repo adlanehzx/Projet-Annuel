@@ -47,7 +47,7 @@
                 v-for="(item, i) in collection.items.slice(0, 4)"
                 :key="i"
                 v-if="item.watchlist.posterPath"
-                :src="`https://image.tmdb.org/t/p/w154${item.watchlist.posterPath}`"
+                :src="item.watchlist.posterPath"
                 :alt="item.watchlist.title"
                 class="w-full h-full object-cover group-hover:scale-110 transition"
               />

@@ -8,10 +8,46 @@ const MAX_RETRIES = Number(process.env.JIKAN_MAX_RETRIES ?? 3);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const LIBRETRANSLATE_URL =
+  process.env.LIBRETRANSLATE_URL ?? "http://localhost:5000";
+
+// Traduit un texte anglais en français via LibreTranslate.
+// En cas d'échec (service indisponible, etc.), retourne le texte original.
+async function translateToFrench(text) {
+  if (!text) return text;
+  try {
+    const response = await fetch(`${LIBRETRANSLATE_URL}/translate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: text,
+        source: "en",
+        target: "fr",
+        format: "text",
+      }),
+    });
+    if (!response.ok) return text;
+    const data = await response.json();
+    return data?.translatedText || text;
+  } catch (error) {
+    return text;
+  }
+}
+
 function toDate(value) {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// Retire les mentions d'attribution ajoutées par MyAnimeList à la fin des synopsis,
+// ex: "[Written by MAL Rewrite]" ou "(Source: ...)".
+function cleanSynopsis(text) {
+  if (!text) return text;
+  return text
+    .replace(/\s*\[Written by[^\]]*\]/gi, "")
+    .replace(/\s*\(Source:[^)]*\)/gi, "")
+    .trim();
 }
 
 function buildAnimeData(entry) {
@@ -19,7 +55,7 @@ function buildAnimeData(entry) {
     jikanId: entry.mal_id,
     title: entry.title,
     titleEnglish: entry.title_english ?? null,
-    synopsis: entry.synopsis ?? null,
+    synopsis: cleanSynopsis(entry.synopsis) ?? null,
     imageUrl: entry.images?.jpg?.image_url ?? null,
     score: entry.score ?? null,
     rank: entry.rank ?? null,
@@ -99,6 +135,7 @@ async function main() {
 
     for (const entry of results) {
       const anime = buildAnimeData(entry);
+      anime.synopsis = await translateToFrench(anime.synopsis);
       await upsertGenresAndAnime(anime);
       imported += 1;
     }

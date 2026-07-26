@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Stats icon">
+  <g fill="#35408C">
+    <path d="M8 8h12v100h100v12H8z"/>
+    <rect x="26" y="78" width="20" height="24" rx="1.5"/>
+    <rect x="52" y="66" width="20" height="36" rx="1.5"/>
+    <rect x="78" y="58" width="20" height="44" rx="1.5"/>
+    <rect x="104" y="46" width="16" height="56" rx="1.5"/>
+    <circle cx="30" cy="58" r="10"/>
+    <circle cx="58" cy="36" r="10"/>
+    <circle cx="86" cy="40" r="10"/>
+    <circle cx="112" cy="20" r="10"/>
+    <path d="M30 58 58 36 86 40 112 20" stroke="#35408C" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

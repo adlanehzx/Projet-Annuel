@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
 export default {
+  darkMode: "class",
   content: [
     "./components/**/*.{js,vue,ts}",
     "./layouts/**/*.vue",
@@ -12,11 +13,31 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        display: ["Space Grotesk", ...defaultTheme.fontFamily.sans],
         sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        mono: ["IBM Plex Mono", ...defaultTheme.fontFamily.mono],
       },
       colors: {
-        primary: "#14b8a6",
-        dark: "#0f172a",
+        at: {
+          "bg-dark": "#14171F",
+          "bg-dark-elevated": "#1E212D",
+          "bg-dark-input": "#26293D",
+          "bg-light": "#E6DAD2",
+          "bg-light-elevated": "#EFE9E3",
+          "bg-light-input": "#FFFFFF",
+          "accent-primary": "#D6432B",
+          "accent-primary-hover": "#C53620",
+          "accent-secondary": "#35408C",
+          "accent-secondary-hover": "#2A3370",
+          "text-primary-dark": "#F1F0EC",
+          "text-secondary-dark": "#B8B7B0",
+          "text-tertiary-dark": "#7F7D74",
+          "text-primary-light": "#1A1B1E",
+          "text-secondary-light": "#6B6D76",
+          "text-tertiary-light": "#A3A5AE",
+          "border-dark": "#3C3F4D",
+          "border-light": "#C9CAD1",
+        },
       },
     },
   },

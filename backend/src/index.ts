@@ -3,7 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/auth.js";
-import tmdbRoutes from "./routes/tmdb.js";
 import watchlistRoutes from "./routes/watchlist.js";
 import reviewRoutes from "./routes/reviews.js";
 import collectionRoutes from "./routes/collections.js";
@@ -31,7 +30,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes publiques
-app.use("/api/tmdb", tmdbRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/animes", animeRoutes);
@@ -53,7 +51,6 @@ app.get("/api/health", (req, res) => {
 // Debug config (remove in production)
 app.get("/api/health/config", (req, res) => {
   res.json({
-    tmdb_api_key: process.env.TMDB_API_KEY ? "***loaded***" : "NOT LOADED",
     database_url: process.env.DATABASE_URL ? "***loaded***" : "NOT LOADED",
     node_env: process.env.NODE_ENV,
   });

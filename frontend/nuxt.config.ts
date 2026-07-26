@@ -22,14 +22,16 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "CineTrack - Suivi Cinématographique",
+      title: "AnimeTrack",
+      link: [
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
+        { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" },
+      ],
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        {
-          name: "description",
-          content: "Application de suivi cinématographique - Style Letterboxd",
-        },
+        { name: "description", content: "AnimeTrack — Suivez et découvrez des animes" },
       ],
     },
   },
