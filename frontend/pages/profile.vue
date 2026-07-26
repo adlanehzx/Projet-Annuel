@@ -1,187 +1,102 @@
 <template>
-  <main class="max-w-4xl mx-auto px-4 py-12 space-y-6">
-    <div class="card p-8">
-      <h1 class="text-3xl font-bold">Mon Profil</h1>
-      <p class="text-slate-400 mt-2">Gérez vos films et évaluations</p>
-    </div>
+  <div style="max-width:1000px;margin:0 auto;padding:24px 24px 48px;width:100%">
 
-    <div class="card p-8">
-      <h2 class="text-xl font-bold mb-1">Authentification à deux facteurs</h2>
-      <p class="text-slate-400 text-sm mb-6">
-        Ajoutez une couche de sécurité supplémentaire à votre compte.
-      </p>
+    <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-      <div
-        v-if="feedback"
-        class="mb-4 p-3 rounded text-sm"
-        :class="
-          feedbackIsError
-            ? 'bg-red-500/20 border border-red-500/50 text-red-400'
-            : 'bg-green-500/20 border border-green-500/50 text-green-400'
-        "
-      >
-        {{ feedback }}
+    <template v-else>
+      <!-- Header profil -->
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;flex-shrink:0">
+          {{ (user?.username || '?').slice(0, 2).toUpperCase() }}
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--text-primary)">{{ user?.username }}</div>
+          <div style="font-size:14px;color:var(--text-secondary);margin-top:4px">Membre depuis {{ joinDate }}</div>
+        </div>
+        <NuxtLink to="/settings" style="padding:9px 18px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-weight:500;font-size:14px;text-decoration:none">Paramètres</NuxtLink>
       </div>
 
-      <p v-if="loadingStatus" class="text-slate-400 text-sm">Chargement...</p>
-
-      <template v-else>
-        <!-- 2FA déjà activée -->
-        <div v-if="twoFactorEnabled && !setupState" class="space-y-4">
-          <p class="text-sm text-slate-300">
-            La 2FA est actuellement <span class="text-green-400">activée</span>.
-          </p>
-          <div class="max-w-xs">
-            <label class="block text-sm font-medium mb-2"
-              >Mot de passe pour désactiver</label
-            >
-            <input
-              v-model="disablePassword"
-              type="password"
-              class="input"
-              placeholder="••••••••"
-            />
-          </div>
-          <button
-            class="btn btn-secondary"
-            :disabled="!disablePassword || actionLoading"
-            @click="handleDisable"
-          >
-            Désactiver la 2FA
-          </button>
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:16px">
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center">
+          <div style="font-family:var(--font-mono);font-size:26px;line-height:1.2;color:var(--text-primary)">{{ stats.animeCount }}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:5px">Animes vus</div>
         </div>
-
-        <!-- 2FA désactivée, pas encore en cours de setup -->
-        <div v-else-if="!twoFactorEnabled && !setupState" class="space-y-4">
-          <p class="text-sm text-slate-300">
-            La 2FA est actuellement <span class="text-red-400">désactivée</span>.
-          </p>
-          <button
-            class="btn btn-primary"
-            :disabled="actionLoading"
-            @click="handleStartSetup"
-          >
-            Activer la 2FA
-          </button>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center">
+          <div style="font-family:var(--font-mono);font-size:26px;line-height:1.2;color:var(--text-primary)">{{ stats.episodeCount }}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:5px">Épisodes</div>
         </div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center">
+          <div style="font-family:var(--font-mono);font-size:26px;line-height:1.2;color:var(--text-primary)">{{ stats.averageRating.toFixed(1) }}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:5px">Note moy.</div>
+        </div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center">
+          <div style="font-family:var(--font-mono);font-size:26px;line-height:1.2;color:var(--text-primary)">{{ stats.reviewCount }}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:5px">Reviews</div>
+        </div>
+      </div>
 
-        <!-- Setup en cours: QR code + saisie du code -->
-        <div v-else-if="setupState" class="space-y-4">
-          <p class="text-sm text-slate-300">
-            Scannez ce QR code avec votre application d'authentification
-            (Google Authenticator, Authy...), puis entrez le code généré.
-          </p>
-          <img
-            :src="setupState.qrCode"
-            alt="QR code 2FA"
-            class="w-48 h-48 bg-white p-2 rounded"
-          />
-          <div class="max-w-xs">
-            <label class="block text-sm font-medium mb-2">Code de vérification</label>
-            <input
-              v-model="enableToken"
-              type="text"
-              inputmode="numeric"
-              maxlength="6"
-              class="input"
-              placeholder="123456"
-            />
-          </div>
-          <div class="flex gap-3">
-            <button
-              class="btn btn-primary"
-              :disabled="!enableToken || actionLoading"
-              @click="handleConfirmEnable"
-            >
-              Confirmer
-            </button>
-            <button class="btn btn-secondary" @click="setupState = null">
-              Annuler
-            </button>
+      <!-- Répartition genre -->
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px">
+        <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 18px;color:var(--text-primary)">Top genres</h2>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div v-for="genre in topGenres" :key="genre.name" style="display:flex;align-items:center;gap:12px">
+            <span style="width:110px;font-size:13px;flex-shrink:0;color:var(--text-secondary)">{{ genre.name }}</span>
+            <div style="flex:1;height:18px;background:var(--bg);border-radius:4px;overflow:hidden">
+              <div :style="`width:${(genre.count / (topGenres[0]?.count || 1)) * 100}%;height:100%;background:var(--color-accent-secondary);transition:width 0.3s`"></div>
+            </div>
+            <span style="width:38px;text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">{{ genre.count }}</span>
           </div>
         </div>
-      </template>
-    </div>
-  </main>
+      </div>
+
+      <!-- Reviews récentes -->
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:26px 0 12px;color:var(--text-primary)">Reviews récentes</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div v-for="review in recentReviews" :key="review.id" style="display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px">
+          <span style="font-size:14px;flex:1;min-width:0;color:var(--text-primary)">{{ review.watchlistItem?.anime?.title || 'Anime' }} — <span style="font-family:var(--font-mono);color:var(--color-accent-primary)">★ {{ review.rating }}/10</span></span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);flex-shrink:0">{{ formatDate(review.createdAt) }}</span>
+        </div>
+        <div v-if="recentReviews.length === 0" style="padding:28px;border:1px dashed var(--border);border-radius:10px;text-align:center;color:var(--text-secondary);font-size:14px">
+          Aucune review pour l'instant.
+        </div>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
-const { get2FAStatus, setup2FA, enable2FA, disable2FA } = useAuth();
+import { useAuth } from "~/composables/useAuth";
+import { useApi } from "~/composables/useApi";
 
-const loadingStatus = ref(true);
-const actionLoading = ref(false);
-const twoFactorEnabled = ref(false);
-const setupState = ref<{ secret: string; qrCode: string } | null>(null);
-const enableToken = ref("");
-const disablePassword = ref("");
-const feedback = ref("");
-const feedbackIsError = ref(false);
+definePageMeta({ middleware: "auth" });
 
-const showFeedback = (message: string, isError = false) => {
-  feedback.value = message;
-  feedbackIsError.value = isError;
-};
+const { user } = useAuth();
+const api = useApi();
 
-const refreshStatus = async () => {
-  loadingStatus.value = true;
+const loading = ref(true);
+const stats = ref({ animeCount: 0, episodeCount: 0, averageRating: 0, reviewCount: 0 });
+const topGenres = ref<any[]>([]);
+const recentReviews = ref<any[]>([]);
+
+onMounted(async () => {
   try {
-    twoFactorEnabled.value = await get2FAStatus();
-  } catch {
-    showFeedback("Impossible de récupérer le statut 2FA", true);
-  } finally {
-    loadingStatus.value = false;
-  }
-};
+    const [statsRes, genresRes, reviewsRes] = await Promise.all([
+      api.get("/profile/stats"),
+      api.get("/profile/genres"),
+      api.get("/reviews?limit=3"),
+    ]);
+    stats.value = statsRes.data;
+    topGenres.value = genresRes.data.slice(0, 6);
+    recentReviews.value = reviewsRes.data;
+  } catch (e) { console.error(e); }
+  finally { loading.value = false; }
+});
 
-const handleStartSetup = async () => {
-  actionLoading.value = true;
-  feedback.value = "";
-  try {
-    setupState.value = await setup2FA();
-  } catch (err: any) {
-    showFeedback(
-      err.response?.data?.error || "Erreur lors de l'activation",
-      true,
-    );
-  } finally {
-    actionLoading.value = false;
-  }
-};
+const joinDate = computed(() => {
+  if (!user.value?.createdAt) return "?";
+  return new Date(user.value.createdAt).toLocaleDateString("fr-FR", { year: "numeric", month: "long" });
+});
 
-const handleConfirmEnable = async () => {
-  if (!setupState.value) return;
-  actionLoading.value = true;
-  feedback.value = "";
-  try {
-    await enable2FA(setupState.value.secret, enableToken.value);
-    setupState.value = null;
-    enableToken.value = "";
-    twoFactorEnabled.value = true;
-    showFeedback("2FA activée avec succès");
-  } catch (err: any) {
-    showFeedback(err.response?.data?.error || "Code invalide", true);
-  } finally {
-    actionLoading.value = false;
-  }
-};
-
-const handleDisable = async () => {
-  actionLoading.value = true;
-  feedback.value = "";
-  try {
-    await disable2FA(disablePassword.value);
-    disablePassword.value = "";
-    twoFactorEnabled.value = false;
-    showFeedback("2FA désactivée");
-  } catch (err: any) {
-    showFeedback(
-      err.response?.data?.error || "Mot de passe invalide",
-      true,
-    );
-  } finally {
-    actionLoading.value = false;
-  }
-};
-
-onMounted(refreshStatus);
+const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { year: "2-digit", month: "numeric", day: "numeric" });
 </script>

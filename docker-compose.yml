@@ -38,6 +38,26 @@ services:
       - cinetrack-network
     restart: unless-stopped
 
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: cinetrack-libretranslate
+    ports:
+      - "5050:5000"
+    environment:
+      - LT_LOAD_ONLY=en,fr
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:5000/languages >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -55,9 +75,7 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost:3000/auth/callback/github}
-      - TMDB_API_KEY=85f102eb2bca94c4f6b9366439728adf
-      - TMDB_ACCESS_TOKEN=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NWYxMDJlYjJiY2E5NGM0ZjZiOTM2NjQzOTcyOGFkZiIsIm5iZiI6MTc3NDUxMDU5MS45NDIwMDAyLCJzdWIiOiI2OWM0ZTFlZmY3OTU4ZTk0YWNiNDIwOTU5Iiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.o96jtG3bcU06xI4Gf_qy1V9WVr6te-7zXAAAWKSqCZs
-      - TMDB_BASE_URL=https://api.themoviedb.org/3
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
     depends_on:
       db:
         condition: service_healthy

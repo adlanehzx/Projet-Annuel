@@ -48,7 +48,7 @@
             >
               <img
                 v-if="item.watchlist.posterPath"
-                :src="`https://image.tmdb.org/t/p/w342${item.watchlist.posterPath}`"
+                :src="item.watchlist.posterPath"
                 :alt="item.watchlist.title"
                 class="w-full h-full object-cover group-hover:scale-105 transition"
               />
