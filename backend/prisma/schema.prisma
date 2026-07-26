@@ -26,26 +26,13 @@ model User {
   // OAuth
   googleId String? @unique
   githubId String? @unique
-  oauthProviders OAuthProvider[]
-  
+
   watchlist Watchlist[]
   reviews Review[]
   collections Collection[]
   lists List[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model OAuthProvider {
-  id    Int     @id @default(autoincrement())
-  provider String // "google", "github"
-  providerUserId String
-  userId Int
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  
-  @@unique([provider, userId])
-  @@index([userId])
 }
 
 // Watchlist avec status

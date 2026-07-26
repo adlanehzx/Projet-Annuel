@@ -7,6 +7,9 @@ import {
   hashPassword,
   comparePassword,
 } from "../services/auth.js";
+import { verifyGoogleIdToken, exchangeGithubCode } from "../services/oauth.js";
+import { authMiddleware } from "../middleware/auth.js";
+import type { OAuthProfile } from "../services/oauth.js";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -74,193 +77,209 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 // ====== Two-Factor Authentication (2FA) ======
+// Toutes ces routes nécessitent un utilisateur authentifié (authMiddleware).
 
 // POST /api/auth/2fa/setup - Générer QR code pour 2FA
-router.post("/2fa/setup", async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+router.post(
+  "/2fa/setup",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.userId!;
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user)
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
 
-    const { secret, qrCode } = await generateTOTPSecret(user.email);
+      const { secret, qrCode } = await generateTOTPSecret(user.email);
 
-    res.json({
-      secret,
-      qrCode,
-      message: "Scannez le QR code avec votre appli d'authentification",
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
+      res.json({
+        secret,
+        qrCode,
+        message: "Scannez le QR code avec votre appli d'authentification",
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+);
 
 // POST /api/auth/2fa/enable - Activer 2FA avec vérification
-router.post("/2fa/enable", async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const { secret, totpToken } = req.body;
+router.post(
+  "/2fa/enable",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { secret, totpToken } = req.body;
 
-    if (!userId || !secret || !totpToken)
-      return res.status(400).json({ error: "Données manquantes" });
+      if (!secret || !totpToken)
+        return res.status(400).json({ error: "Données manquantes" });
 
-    // Vérifier que le token est correct
-    if (!verifyTOTPToken(secret, totpToken))
-      return res.status(400).json({ error: "Token invalide" });
+      // Vérifier que le token est correct
+      if (!verifyTOTPToken(secret, totpToken))
+        return res.status(400).json({ error: "Token invalide" });
 
-    // Activer 2FA
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: secret,
-        totpEnabled: true,
-      },
-    });
+      // Activer 2FA
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: secret,
+          totpEnabled: true,
+        },
+      });
 
-    res.json({ message: "2FA activé avec succès" });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
+      res.json({ message: "2FA activé avec succès" });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+);
 
 // POST /api/auth/2fa/disable - Désactiver 2FA
-router.post("/2fa/disable", async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const { password } = req.body;
+router.post(
+  "/2fa/disable",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { password } = req.body;
 
-    if (!userId || !password)
-      return res.status(400).json({ error: "Données manquantes" });
+      if (!password)
+        return res.status(400).json({ error: "Données manquantes" });
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.password || !comparePassword(password, user.password))
-      return res.status(401).json({ error: "Mot de passe invalide" });
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (
+        !user ||
+        !user.password ||
+        !comparePassword(password, user.password)
+      )
+        return res.status(401).json({ error: "Mot de passe invalide" });
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        totpSecret: null,
-        totpEnabled: false,
-      },
-    });
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          totpSecret: null,
+          totpEnabled: false,
+        },
+      });
 
-    res.json({ message: "2FA désactivé" });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
+      res.json({ message: "2FA désactivé" });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+);
 
 // GET /api/auth/2fa/status - Vérifier le statut 2FA
-router.get("/2fa/status", async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+router.get(
+  "/2fa/status",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.userId!;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { totpEnabled: true },
-    });
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { totpEnabled: true },
+      });
 
-    res.json({ totpEnabled: user?.totpEnabled ?? false });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
+      res.json({ totpEnabled: user?.totpEnabled ?? false });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+);
 
 // ====== OAuth2 ======
 
-// POST /api/auth/oauth/google - Callback OAuth Google
+const findOrCreateOAuthUser = async (
+  provider: "google" | "github",
+  profile: OAuthProfile,
+) => {
+  const providerColumn = provider === "google" ? "googleId" : "githubId";
+
+  let user = await prisma.user.findUnique({ where: { email: profile.email } });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: profile.email,
+        username: profile.username,
+        avatar: profile.avatar,
+        [providerColumn]: profile.providerId,
+      },
+    });
+  } else if (!(user as any)[providerColumn]) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        [providerColumn]: profile.providerId,
+        avatar: profile.avatar || user.avatar,
+      },
+    });
+  }
+
+  return user;
+};
+
+// POST /api/auth/oauth/google - Connexion via Google
+// Le frontend envoie l'id_token émis par Google Identity Services ; il est
+// vérifié auprès de Google avant toute création/liaison de compte.
 router.post("/oauth/google", async (req: Request, res: Response) => {
   try {
-    const { googleId, email, username, picture } = req.body;
+    const { idToken } = req.body;
+    if (!idToken)
+      return res.status(400).json({ error: "idToken Google manquant" });
 
-    if (!googleId || !email)
-      return res.status(400).json({ error: "Données Google manquantes" });
-
-    // Chercher l'utilisateur
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    // Créer si n'existe pas
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          username: username || email.split("@")[0],
-          googleId,
-          avatar: picture,
-        },
-      });
-    } else {
-      // Lier le compte Google si pas déjà lié
-      if (!user.googleId) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { googleId, avatar: picture || user.avatar },
-        });
-      }
-    }
+    const profile = await verifyGoogleIdToken(idToken);
+    const user = await findOrCreateOAuthUser("google", profile);
 
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
       user: { id: user.id, email: user.email, username: user.username },
     });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur OAuth Google" });
+  } catch (error: any) {
+    if (error.code === "P2002")
+      return res.status(400).json({ error: "Username déjà utilisé" });
+    res
+      .status(401)
+      .json({ error: error.message || "Authentification Google invalide" });
   }
 });
 
-// POST /api/auth/oauth/github - Callback OAuth Github
+// POST /api/auth/oauth/github - Connexion via GitHub
+// Le frontend envoie le code d'autorisation reçu de GitHub ; il est échangé
+// contre un access_token côté serveur (le client secret ne quitte jamais
+// le backend) avant toute création/liaison de compte.
 router.post("/oauth/github", async (req: Request, res: Response) => {
   try {
-    const { githubId, email, username, avatar } = req.body;
+    const { code } = req.body;
+    if (!code)
+      return res.status(400).json({ error: "code GitHub manquant" });
 
-    if (!githubId || !email)
-      return res.status(400).json({ error: "Données GitHub manquantes" });
-
-    // Chercher l'utilisateur
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    // Créer si n'existe pas
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          username: username || email.split("@")[0],
-          githubId,
-          avatar,
-        },
-      });
-    } else {
-      // Lier le compte GitHub si pas déjà lié
-      if (!user.githubId) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { githubId, avatar: avatar || user.avatar },
-        });
-      }
-    }
+    const profile = await exchangeGithubCode(code);
+    const user = await findOrCreateOAuthUser("github", profile);
 
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
       user: { id: user.id, email: user.email, username: user.username },
     });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur OAuth GitHub" });
+  } catch (error: any) {
+    if (error.code === "P2002")
+      return res.status(400).json({ error: "Username déjà utilisé" });
+    res
+      .status(401)
+      .json({ error: error.message || "Authentification GitHub invalide" });
   }
 });
 
 // GET /api/auth/profile - Récupérer le profil de l'utilisateur
-router.get("/profile", async (req: Request, res: Response) => {
+router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+    const userId = req.userId!;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -283,12 +302,10 @@ router.get("/profile", async (req: Request, res: Response) => {
 });
 
 // PUT /api/auth/profile - Mettre à jour le profil
-router.put("/profile", async (req: Request, res: Response) => {
+router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId!;
     const { username, bio, avatar, isPublic } = req.body;
-
-    if (!userId) return res.status(401).json({ error: "Non authentifié" });
 
     const user = await prisma.user.update({
       where: { id: userId },

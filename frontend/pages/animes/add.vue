@@ -1,3 +1,3 @@
 <script setup lang="ts">
-navigateTo("/movies/search");
+navigateTo("/animes/search");
 </script>

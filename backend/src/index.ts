@@ -3,7 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/auth.js";
-import tmdbRoutes from "./routes/tmdb.js";
 import watchlistRoutes from "./routes/watchlist.js";
 import reviewRoutes from "./routes/reviews.js";
 import collectionRoutes from "./routes/collections.js";
@@ -13,7 +12,8 @@ import recommendationRoutes from "./routes/recommendations.js";
 import profileRoutes from "./routes/profiles.js";
 import statisticsRoutes from "./routes/statistics.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { authMiddleware } from "./middleware/auth.js";
+import { authMiddleware, optionalAuthMiddleware } from "./middleware/auth.js";
+import { env } from "./config/env.js";
 
 dotenv.config();
 
@@ -31,9 +31,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes publiques
-app.use("/api/tmdb", tmdbRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/profiles", profileRoutes);
+app.use("/api/profiles", optionalAuthMiddleware, profileRoutes);
 app.use("/api/animes", animeRoutes);
 
 // Routes protégées
@@ -50,14 +49,15 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
 
-// Debug config (remove in production)
-app.get("/api/health/config", (req, res) => {
-  res.json({
-    tmdb_api_key: process.env.TMDB_API_KEY ? "***loaded***" : "NOT LOADED",
-    database_url: process.env.DATABASE_URL ? "***loaded***" : "NOT LOADED",
-    node_env: process.env.NODE_ENV,
+// Debug config - uniquement disponible hors production
+if (env.nodeEnv !== "production") {
+  app.get("/api/health/config", (req, res) => {
+    res.json({
+      database_url: process.env.DATABASE_URL ? "***loaded***" : "NOT LOADED",
+      node_env: env.nodeEnv,
+    });
   });
-});
+}
 
 // Error Handler
 app.use(errorHandler);
