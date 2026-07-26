@@ -2,6 +2,7 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { env } from "../config/env.js";
 
 export const generateTOTPSecret = async (email: string) => {
   const secret = speakeasy.generateSecret({
@@ -30,9 +31,9 @@ export const verifyTOTPToken = (secret: string, token: string): boolean => {
 export const generateJWT = (
   userId: number,
   email: string,
-  expiresIn: jwt.SignOptions["expiresIn"] = "7d",
+  expiresIn: jwt.SignOptions["expiresIn"] = env.jwtExpiry as jwt.SignOptions["expiresIn"],
 ): string => {
-  return jwt.sign({ id: userId, email }, process.env.JWT_SECRET || "secret", {
+  return jwt.sign({ id: userId, email }, env.jwtSecret, {
     expiresIn,
   });
 };

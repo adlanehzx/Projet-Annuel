@@ -24,7 +24,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
     // Si le profil n'est pas public et l'utilisateur n'est pas le propriétaire
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!user.isPublic && user.id !== userId) {
       return res.status(403).json({ error: "Ce profil n'est pas public" });
     }
@@ -102,7 +102,7 @@ router.get("/:username/reviews", async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
     // Vérifier que le profil est public
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!user.isPublic && user.id !== userId) {
       return res.status(403).json({ error: "Ce profil n'est pas public" });
     }
