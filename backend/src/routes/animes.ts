@@ -16,6 +16,8 @@ router.get("/", async (req: Request, res: Response) => {
       typeof req.query.format === "string" ? req.query.format.trim() : "";
     const yearQuery =
       typeof req.query.year === "string" ? req.query.year.trim() : "";
+    const sortQuery =
+      typeof req.query.sort === "string" ? req.query.sort.trim() : "score";
 
     const page = Math.max(1, Number.parseInt(String(req.query.page ?? "1"), 10) || 1);
     const limit = Math.min(
@@ -109,13 +111,20 @@ router.get("/", async (req: Request, res: Response) => {
 
     const where = andFilters.length > 0 ? { AND: andFilters } : undefined;
 
+    const orderBy =
+      sortQuery === "title"
+        ? [{ title: "asc" as const }]
+        : sortQuery === "rank"
+          ? [{ rank: "asc" as const }, { score: "desc" as const }]
+          : [{ score: "desc" as const }, { popularity: "asc" as const }];
+
     const [animes, total] = await Promise.all([
       prisma.anime.findMany({
         where,
         include: {
           genres: { include: { genre: true } },
         },
-        orderBy: [{ score: "desc" }, { popularity: "asc" }],
+        orderBy,
         take: limit,
         skip,
       }),
@@ -136,6 +145,7 @@ router.get("/", async (req: Request, res: Response) => {
         year: yearQuery || null,
         studio: studioQuery || null,
         format: formatQuery || null,
+        sort: sortQuery || null,
       },
     });
   } catch (error) {

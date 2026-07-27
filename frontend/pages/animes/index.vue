@@ -40,15 +40,18 @@
               </select>
             </label>
             <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary)">
-              Statut
-              <select v-model="filters.status" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px;cursor:pointer">
-                <option value="">Tous les statuts</option>
-                <option value="Finished Airing">Terminé</option>
-                <option value="Currently Airing">En cours</option>
+              Format
+              <select v-model="filters.format" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px;cursor:pointer">
+                <option value="">Tous les formats</option>
+                <option value="TV">TV</option>
+                <option value="Movie">Movie</option>
+                <option value="OVA">OVA</option>
+                <option value="ONA">ONA</option>
+                <option value="Special">Special</option>
               </select>
             </label>
           </div>
-          <button @click="filtersOpen = false" class="at-btn-primary" style="width:100%;margin-top:16px;padding:10px">Afficher {{ filtered.length }} résultats</button>
+          <button @click="filtersOpen = false" class="at-btn-primary" style="width:100%;margin-top:16px;padding:10px">Afficher {{ totalResults }} résultats</button>
         </div>
       </Transition>
     </div>
@@ -64,13 +67,13 @@
       <button @click="resetFilters" style="background:none;border:none;color:var(--text-secondary);font-family:var(--font-body);font-size:13px;cursor:pointer;padding:4px 6px;text-decoration:underline">Tout effacer</button>
     </div>
 
-    <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">{{ filtered.length }} résultats</div>
+    <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">{{ totalResults }} résultats</div>
 
     <div v-if="isLoading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
     <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;margin-top:16px">
       <div
-        v-for="anime in paged"
+        v-for="anime in animes"
         :key="anime.id"
         role="button"
         tabindex="0"
@@ -98,14 +101,14 @@
     </div>
 
     <div v-if="totalPages > 1" style="display:flex;justify-content:center;gap:8px;margin-top:30px">
-      <button @click="currentPage--" :disabled="currentPage === 1" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">‹</button>
+      <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">‹</button>
       <button
         v-for="p in totalPages"
         :key="p"
-        @click="currentPage = p"
+        @click="changePage(p)"
         :style="`min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);font-family:var(--font-mono);font-size:13px;cursor:pointer;background:${currentPage===p?'var(--color-accent-primary)':'var(--bg-elevated)'};color:${currentPage===p?'#fff':'var(--text-primary)'}`"
       >{{ p }}</button>
-      <button @click="currentPage++" :disabled="currentPage === totalPages" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">›</button>
+      <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" style="min-width:36px;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);font-family:var(--font-mono);font-size:13px;cursor:pointer">›</button>
     </div>
 
     <div v-if="filtersOpen && !isMobile" @click="filtersOpen = false" style="position:fixed;inset:0;z-index:45;background:transparent"></div>
@@ -125,11 +128,14 @@
             </select>
           </label>
           <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary)">
-            Statut
-            <select v-model="filters.status" style="width:100%;padding:11px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px;cursor:pointer">
-              <option value="">Tous les statuts</option>
-              <option value="Finished Airing">Terminé</option>
-              <option value="Currently Airing">En cours</option>
+            Format
+            <select v-model="filters.format" style="width:100%;padding:11px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px;cursor:pointer">
+              <option value="">Tous les formats</option>
+              <option value="TV">TV</option>
+              <option value="Movie">Movie</option>
+              <option value="OVA">OVA</option>
+              <option value="ONA">ONA</option>
+              <option value="Special">Special</option>
             </select>
           </label>
           <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary)">
@@ -151,11 +157,34 @@
 </template>
 
 <script setup lang="ts">
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const useRuntimeConfig: any;
+declare const useWatchlist: any;
+declare const useAuth: any;
+declare const ref: any;
+declare const reactive: any;
+declare const computed: any;
+declare const watch: any;
+declare const onMounted: any;
+declare const onBeforeUnmount: any;
+declare const process: any;
+declare const $fetch: any;
+
+type AnimeListItem = {
+  id: number;
+  title: string;
+  titleEnglish?: string | null;
+  rank?: number | null;
+  score?: number | null;
+  status?: string | null;
+  genres?: Array<{ genre?: { name?: string | null } | null } | string>;
+};
+
 const config = useRuntimeConfig();
 const { watchlist, fetchWatchlist } = useWatchlist();
 const { isAuthenticated } = useAuth();
 
-const animes = ref<any[]>([]);
+const animes = ref<AnimeListItem[]>([]);
 const isLoading = ref(true);
 const search = ref("");
 const sortBy = ref("score");
@@ -163,7 +192,38 @@ const currentPage = ref(1);
 const filtersOpen = ref(false);
 const isMobile = ref(false);
 const PAGE_SIZE = 24;
-const filters = reactive({ genre: "", status: "" });
+const totalPages = ref(1);
+const totalResults = ref(0);
+const filters = reactive({ genre: "", format: "" });
+
+const fetchAnimes = async () => {
+  try {
+    isLoading.value = true;
+
+    const response = await $fetch<any>("/animes", {
+      baseURL: config.public.apiBase,
+      query: {
+        page: currentPage.value,
+        limit: PAGE_SIZE,
+        sort: sortBy.value,
+        q: search.value.trim() || undefined,
+        genre: filters.genre || undefined,
+        format: filters.format || undefined,
+      },
+    });
+
+    animes.value = Array.isArray(response?.data) ? response.data : [];
+    totalPages.value = Number(response?.pagination?.totalPages ?? 1);
+    totalResults.value = Number(response?.pagination?.total ?? animes.value.length);
+  } catch (e) {
+    console.error(e);
+    animes.value = [];
+    totalPages.value = 1;
+    totalResults.value = 0;
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const updateMobile = () => { if (process.client) isMobile.value = window.innerWidth < 1024; };
 
@@ -171,19 +231,10 @@ onMounted(async () => {
   updateMobile();
   if (process.client) window.addEventListener("resize", updateMobile);
   try {
-    const response = await $fetch<any>("/animes", { baseURL: config.public.apiBase });
-    if (Array.isArray(response)) {
-      animes.value = response;
-    } else if (Array.isArray(response?.data)) {
-      animes.value = response.data;
-    } else {
-      animes.value = [];
-    }
+    await fetchAnimes();
     if (isAuthenticated.value) await fetchWatchlist();
   } catch (e) {
     console.error(e);
-  } finally {
-    isLoading.value = false;
   }
 });
 
@@ -193,43 +244,40 @@ onBeforeUnmount(() => {
 
 const allGenres = computed(() => {
   const set = new Set<string>();
-  animes.value.forEach(a => a.genres?.forEach((g: any) => set.add(g.genre?.name ?? g)));
+  animes.value.forEach((a: AnimeListItem) =>
+    a.genres?.forEach((g: any) => set.add(g?.genre?.name ?? g)),
+  );
   return [...set].sort();
 });
 
-const filtered = computed(() => {
-  let list = animes.value;
-  if (search.value.trim()) {
-    const q = search.value.toLowerCase();
-    list = list.filter(a => a.title.toLowerCase().includes(q) || (a.titleEnglish?.toLowerCase().includes(q)));
-  }
-  if (filters.genre) list = list.filter(a => a.genres?.some((g: any) => (g.genre?.name ?? g) === filters.genre));
-  if (filters.status) list = list.filter(a => a.status === filters.status);
-  return [...list].sort((a, b) => {
-    if (sortBy.value === "title") return a.title.localeCompare(b.title);
-    if (sortBy.value === "rank") return (a.rank ?? 9999) - (b.rank ?? 9999);
-    return (b.score ?? 0) - (a.score ?? 0);
-  });
-});
-
-const totalPages = computed(() => Math.ceil(filtered.value.length / PAGE_SIZE));
-const paged = computed(() => filtered.value.slice((currentPage.value - 1) * PAGE_SIZE, currentPage.value * PAGE_SIZE));
-
 const nActiveFilters = computed(() => Object.values(filters).filter(Boolean).length);
-
-const statusLabel = (s: string) => (s === "Finished Airing" ? "Terminé" : s === "Currently Airing" ? "En cours" : s);
 
 const activeChips = computed(() => {
   const chips: { key: string; label: string; clear: () => void }[] = [];
   if (filters.genre) chips.push({ key: "genre", label: filters.genre, clear: () => { filters.genre = ""; } });
-  if (filters.status) chips.push({ key: "status", label: statusLabel(filters.status), clear: () => { filters.status = ""; } });
+  if (filters.format) chips.push({ key: "format", label: filters.format, clear: () => { filters.format = ""; } });
   return chips;
 });
 
 const isCompleted = (animeId: number) => watchlist.value.some((w: any) => w.animeId === animeId && w.status === "COMPLETED");
-const resetFilters = () => { filters.genre = ""; filters.status = ""; search.value = ""; currentPage.value = 1; };
+const resetFilters = async () => {
+  filters.genre = "";
+  filters.format = "";
+  search.value = "";
+  currentPage.value = 1;
+  await fetchAnimes();
+};
 
-watch([search, filters], () => { currentPage.value = 1; });
+const changePage = async (nextPage: number) => {
+  if (nextPage < 1 || nextPage > totalPages.value || nextPage === currentPage.value) return;
+  currentPage.value = nextPage;
+  await fetchAnimes();
+};
+
+watch([search, () => filters.genre, () => filters.format, sortBy], async () => {
+  currentPage.value = 1;
+  await fetchAnimes();
+});
 </script>
 
 <style scoped>

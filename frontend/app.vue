@@ -106,6 +106,18 @@
 </template>
 
 <script setup lang="ts">
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const useAuth: any;
+declare const useRoute: any;
+declare const useSidebar: any;
+declare const ref: any;
+declare const computed: any;
+declare const watch: any;
+declare const onMounted: any;
+declare const onBeforeUnmount: any;
+declare const navigateTo: any;
+declare const process: any;
+
 const auth = useAuth();
 const route = useRoute();
 const { collapsed, init: initSidebar, toggle: toggleSide } = useSidebar();
@@ -146,7 +158,7 @@ const landingHeaderVars = computed(() =>
 
 type NavItem = { label: string; icon: string; to: string; exact?: boolean };
 
-const navGroups = computed<{ title: string; items: NavItem[] }[]>(() => [
+const navGroups = computed(() => [
   {
     title: "MENU",
     items: [
@@ -166,7 +178,7 @@ const navGroups = computed<{ title: string; items: NavItem[] }[]>(() => [
     title: "GÉNÉRAL",
     items: [{ label: "Profil", icon: "user", to: "/profile" }],
   },
-]);
+] as { title: string; items: NavItem[] }[]);
 
 const isActive = (item: NavItem) =>
   item.exact ? route.path === item.to : route.path.startsWith(item.to);
