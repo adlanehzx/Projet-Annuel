@@ -171,8 +171,14 @@ onMounted(async () => {
   updateMobile();
   if (process.client) window.addEventListener("resize", updateMobile);
   try {
-    const data = await $fetch<any[]>("/animes", { baseURL: config.public.apiBase });
-    animes.value = Array.isArray(data) ? data : [];
+    const response = await $fetch<any>("/animes", { baseURL: config.public.apiBase });
+    if (Array.isArray(response)) {
+      animes.value = response;
+    } else if (Array.isArray(response?.data)) {
+      animes.value = response.data;
+    } else {
+      animes.value = [];
+    }
     if (isAuthenticated.value) await fetchWatchlist();
   } catch (e) {
     console.error(e);

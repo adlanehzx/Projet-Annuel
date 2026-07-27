@@ -1,5 +1,5 @@
 <template>
-  <div style="max-width:1200px;margin:0 auto;padding:24px 24px 48px;width:100%">
+  <div class="watchlist-page" style="max-width:1200px;margin:0 auto;padding:24px 24px 48px;width:100%">
     <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">Ma Watchlist</h1>
 
     <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
@@ -67,7 +67,7 @@
         <div v-if="selectedItem" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50" @click.self="selectedItem=null">
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;position:relative">
             <button @click="selectedItem=null" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;line-height:1">✕</button>
-            <div style="display:flex;gap:20px;padding:24px">
+            <div class="watchlist-modal-body" style="display:flex;gap:20px;padding:24px">
               <img v-if="selectedItem.posterPath" :src="selectedItem.posterPath" :alt="selectedItem.title" style="width:110px;border-radius:8px;object-fit:cover;flex-shrink:0" />
               <div style="flex:1;min-width:0">
                 <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:0 0 8px;color:var(--text-primary)">{{ selectedItem.title }}</h2>
@@ -81,7 +81,7 @@
                     <option value="ON_HOLD">En pause</option>
                   </select>
                 </div>
-                <div style="display:flex;gap:10px">
+                <div class="watchlist-modal-actions" style="display:flex;gap:10px">
                   <NuxtLink :to="`/animes/${selectedItem.animeId}`" @click="selectedItem=null" style="flex:1;padding:10px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;text-align:center">Détail & Avis</NuxtLink>
                   <button @click="removeItem(selectedItem.id)" style="padding:10px 14px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer">Retirer</button>
                 </div>
@@ -227,4 +227,20 @@ const removeItem = async (id: number) => {
 <style scoped>
 .at-fade-enter-active, .at-fade-leave-active { transition: opacity 0.2s ease; }
 .at-fade-enter-from, .at-fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .watchlist-page {
+    padding: 16px 14px 28px !important;
+  }
+
+  .watchlist-modal-body {
+    flex-direction: column;
+    padding: 16px !important;
+    gap: 14px !important;
+  }
+
+  .watchlist-modal-actions {
+    flex-direction: column;
+  }
+}
 </style>

@@ -29,7 +29,7 @@
           </div>
         </div>
 
-        <div style="flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:30rem;max-width:100%;transform:rotate(-4deg)">
+        <div class="hero-poster-grid" style="flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:30rem;max-width:100%;transform:rotate(-4deg)">
           <div
             v-for="(poster, idx) in topPosters"
             :key="idx"
@@ -157,7 +157,7 @@
     </div>
 
     <div style="background:var(--bg);color:var(--text-primary);padding:64px 24px">
-      <div style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center">
+      <div class="signature-grid" style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center">
         <div style="display:flex;justify-content:center;flex-shrink:0">
           <BrandSeal :size="150" format="svg" style="transform:rotate(8deg)" />
         </div>
@@ -233,3 +233,19 @@ const fetchTopPosters = async () => {
   }
 };
 </script>
+
+<style scoped>
+@media (max-width: 768px) {
+  .hero-poster-grid {
+    width: 100% !important;
+    max-width: 320px !important;
+    transform: none !important;
+    margin-inline: auto;
+  }
+
+  .signature-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+</style>
