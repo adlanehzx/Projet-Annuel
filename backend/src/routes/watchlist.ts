@@ -12,7 +12,7 @@ router.get("/", async (req: Request, res: Response) => {
     const watchlist = await prisma.watchlist.findMany({
       where: { userId },
       include: { anime: true, reviews: true, inCollections: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
     res.json(watchlist);
@@ -29,7 +29,7 @@ router.get("/status/:status", async (req: Request, res: Response) => {
     const watchlist = await prisma.watchlist.findMany({
       where: { userId, status: status as any },
       include: { anime: true, reviews: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
     res.json(watchlist);
@@ -71,11 +71,17 @@ router.post("/", async (req: Request, res: Response) => {
 
     if (!anime) return res.status(404).json({ error: "Anime non trouvé" });
 
+    const latestPosition = await prisma.watchlist.aggregate({
+      where: { userId },
+      _max: { position: true },
+    });
+
     const watchlist = await prisma.watchlist.create({
       data: {
         animeId: anime.id,
         title: anime.title,
         posterPath: anime.imageUrl,
+        position: (latestPosition._max.position || 0) + 1,
         status: status || "TO_WATCH",
         userId,
       },
@@ -97,6 +103,63 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+router.put("/reorder", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const watchlistIds = req.body?.watchlistIds;
+
+    if (!Array.isArray(watchlistIds) || watchlistIds.length === 0) {
+      return res.status(400).json({ error: "La liste des IDs est requise" });
+    }
+
+    const orderedIds = watchlistIds
+      .map((id) => Number.parseInt(String(id), 10))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (orderedIds.length !== watchlistIds.length) {
+      return res.status(400).json({ error: "Identifiants invalides" });
+    }
+
+    const uniqueIds = new Set(orderedIds);
+    if (uniqueIds.size !== orderedIds.length) {
+      return res.status(400).json({ error: "Doublons détectés" });
+    }
+
+    const existing = await prisma.watchlist.findMany({
+      where: {
+        userId,
+        id: { in: orderedIds },
+      },
+      select: { id: true },
+    });
+
+    if (existing.length !== orderedIds.length) {
+      return res.status(400).json({ error: "Certains éléments sont introuvables" });
+    }
+
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.watchlist.update({
+          where: { id },
+          data: { position: index + 1 },
+        }),
+      ),
+    );
+
+    emitToUser(userId, "watchlist:changed", {
+      action: "reordered",
+      watchlistIds: orderedIds,
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.put("/:id/status", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

@@ -60,6 +60,9 @@
               </div>
             </Transition>
           </div>
+          <div v-if="watchlistError" style="margin-top:8px;font-size:13px;color:var(--color-accent-primary)">
+            {{ watchlistError }}
+          </div>
         </div>
       </div>
 
@@ -100,6 +103,7 @@ import { useAnimes } from "../../composables/useAnimes";
 import { useReviews } from "../../composables/useReviews";
 import { useAuth } from "../../composables/useAuth";
 import { useAuthGuard } from "../../composables/useAuthGuard";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
 import { io } from "socket.io-client";
 
 // Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
@@ -127,6 +131,7 @@ const statusOpen = ref(false);
 const reviewOpen = ref(false);
 const reviewLoading = ref(false);
 const reviewError = ref("");
+const watchlistError = ref("");
 const myReview = ref({ id: null as number | null, rating: 7, comment: "" });
 const communityReviews = ref([] as any[]);
 const likeLoadingReviewId = ref(null as number | null);
@@ -210,6 +215,7 @@ const statusOpts = [
 const pickStatus = async (status: string) => {
   statusOpen.value = false;
   try {
+    watchlistError.value = "";
     if (watchlistItem.value) {
       await updateStatus(watchlistItem.value.id, status);
     } else {
@@ -221,14 +227,24 @@ const pickStatus = async (status: string) => {
       }
     }
     await fetchWatchlist();
-  } catch (e) { console.error(e); }
+  } catch (e: any) {
+    watchlistError.value = e.response?.data?.error || e.message || "Erreur lors de la mise à jour de la watchlist";
+    console.error(e);
+  }
 };
 
 const removeFromWatchlist = async () => {
   statusOpen.value = false;
   if (!watchlistItem.value) return;
-  try { await removeWatchlistItem(watchlistItem.value.id); await fetchWatchlist(); }
-  catch (e) { console.error(e); }
+  try {
+    watchlistError.value = "";
+    await removeWatchlistItem(watchlistItem.value.id);
+    await fetchWatchlist();
+  }
+  catch (e: any) {
+    watchlistError.value = e.response?.data?.error || e.message || "Erreur lors de la suppression";
+    console.error(e);
+  }
 };
 
 const saveReview = async (payload: {

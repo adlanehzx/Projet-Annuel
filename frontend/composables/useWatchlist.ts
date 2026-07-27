@@ -78,6 +78,15 @@ export const useWatchlist = () => {
     }
   };
 
+  const reorderWatchlist = async (watchlistIds: number[]) => {
+    try {
+      await api.put("/watchlist/reorder", { watchlistIds });
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Erreur lors du classement";
+      throw e;
+    }
+  };
+
   const isInWatchlist = computed(() => (animeId: number) => {
     return watchlist.value.some((item: any) => item.animeId === animeId);
   });
@@ -95,6 +104,7 @@ export const useWatchlist = () => {
     updateStatus,
     updateProgress,
     removeFromWatchlist,
+    reorderWatchlist,
     isInWatchlist,
     getWatchlistItem,
   };

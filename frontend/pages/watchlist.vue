@@ -1,101 +1,157 @@
 <template>
-  <div class="watchlist-page" style="max-width:1200px;margin:0 auto;padding:24px 24px 48px;width:100%">
-    <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">Ma Watchlist</h1>
+  <div class="watchlist-page" style="max-width:1180px;margin:0 auto;padding:24px 24px 40px;width:100%">
+    <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">
+      Ma Watchlist
+    </h1>
 
     <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-    <div v-else-if="watchlist.length === 0" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center">
+    <div
+      v-else-if="watchlist.length === 0"
+      style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center"
+    >
       <BrandSeal :size="72" format="svg" style="opacity:0.25" />
       <div style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">Aucun anime ici</div>
-      <div style="font-size:14px;color:var(--text-secondary);max-width:380px">Ajoutez des animes depuis le catalogue pour suivre votre progression.</div>
-      <NuxtLink to="/animes" style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none">Parcourir le catalogue</NuxtLink>
+      <div style="font-size:14px;color:var(--text-secondary);max-width:380px">
+        Ajoutez des animes depuis le catalogue pour suivre votre progression.
+      </div>
+      <NuxtLink
+        to="/animes"
+        style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none"
+      >
+        Parcourir le catalogue
+      </NuxtLink>
     </div>
 
-    <div v-else style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px">
-      <div
-        v-for="tab in tabs"
-        :key="tab.status"
-        @dragover.prevent="onDragOver(tab.status)"
-        @dragleave="onDragLeave(tab.status)"
-        @drop.prevent="onDrop(tab.status)"
-        :style="`border:1px solid ${dragOverStatus===tab.status?'var(--color-accent-primary)':'var(--border)'};border-radius:12px;padding:10px;background:var(--bg-elevated);min-height:220px;transition:border-color .15s ease`"
-      >
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text-primary)">{{ tab.label }}</div>
-          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">{{ countByStatus(tab.status) }}</div>
+    <div v-else class="watchlist-layout" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start">
+      <section style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)">
+            Classement personnel
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">
+            {{ watchlist.length }} anime(s)
+          </div>
         </div>
 
-        <div v-if="itemsByStatus(tab.status).length === 0" style="padding:14px;border:1px dashed var(--border);border-radius:8px;color:var(--text-secondary);font-size:12px;text-align:center">
-          Glisse un anime ici
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:8px">
           <div
-            v-for="item in itemsByStatus(tab.status)"
+            v-for="(item, index) in watchlist"
             :key="item.id"
             draggable="true"
             @dragstart="onDragStart(item.id)"
+            @dragover.prevent="onDragOverItem(item.id)"
+            @drop.prevent="onDropOnItem(item.id)"
             @dragend="onDragEnd"
+            @click="selectedItemId = item.id"
             role="button"
             tabindex="0"
-            @click="selectedItem = item"
-            @keydown.enter="selectedItem = item"
-            style="cursor:grab;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:8px"
+            @keydown.enter="selectedItemId = item.id"
+            :style="`display:flex;gap:10px;padding:10px;border-radius:10px;border:1px solid ${selectedItemId === item.id ? 'var(--color-accent-primary)' : dragOverItemId === item.id ? 'var(--color-accent-secondary)' : 'var(--border)'};background:${selectedItemId === item.id ? 'rgba(214,67,43,0.08)' : 'var(--bg-input)'};cursor:grab;transition:border-color .12s ease`"
           >
-            <div style="display:flex;gap:8px;align-items:flex-start">
-              <div style="position:relative;width:52px;flex-shrink:0;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--bg-elevated)">
-                <img v-if="item.posterPath" :src="item.posterPath" :alt="item.title" style="width:100%;height:100%;object-fit:cover" />
-                <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">🎌</div>
-              </div>
-              <div style="min-width:0;flex:1">
-                <div style="font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.25;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ item.title }}</div>
-                <div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">
-                  {{ progressLabel(item) }}
-                </div>
-                <div v-if="updatingItemId === item.id" style="margin-top:4px;font-size:11px;color:var(--color-accent-primary)">
-                  Mise à jour…
-                </div>
-              </div>
+            <div style="width:22px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-tertiary);font-family:var(--font-mono);font-size:11px;line-height:1">
+              <span>#{{ Number(index) + 1 }}</span>
+              <span style="letter-spacing:1px">⋮⋮</span>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <Teleport to="body">
-      <Transition name="at-fade">
-        <div v-if="selectedItem" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50" @click.self="selectedItem=null">
-          <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;position:relative">
-            <button @click="selectedItem=null" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;line-height:1">✕</button>
-            <div class="watchlist-modal-body" style="display:flex;gap:20px;padding:24px">
-              <img v-if="selectedItem.posterPath" :src="selectedItem.posterPath" :alt="selectedItem.title" style="width:110px;border-radius:8px;object-fit:cover;flex-shrink:0" />
-              <div style="flex:1;min-width:0">
-                <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:0 0 8px;color:var(--text-primary)">{{ selectedItem.title }}</h2>
-                <div style="margin-bottom:16px">
-                  <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Statut</div>
-                  <select :value="selectedItem.status" @change="updateStatus(($event.target as HTMLSelectElement).value)" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px">
-                    <option value="TO_WATCH">À voir</option>
-                    <option value="WATCHING">En cours</option>
-                    <option value="COMPLETED">Terminé</option>
-                    <option value="DROPPED">Abandonné</option>
-                    <option value="ON_HOLD">En pause</option>
-                  </select>
-                </div>
-                <div class="watchlist-modal-actions" style="display:flex;gap:10px">
-                  <NuxtLink :to="`/animes/${selectedItem.animeId}`" @click="selectedItem=null" style="flex:1;padding:10px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;text-align:center">Détail & Avis</NuxtLink>
-                  <button @click="removeItem(selectedItem.id)" style="padding:10px 14px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer">Retirer</button>
-                </div>
+            <div style="position:relative;width:54px;flex-shrink:0;aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--bg-elevated)">
+              <img v-if="item.posterPath" :src="item.posterPath" :alt="item.title" style="width:100%;height:100%;object-fit:cover" />
+              <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">🎌</div>
+            </div>
+
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                {{ item.title }}
+              </div>
+              <div style="margin-top:5px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">
+                {{ statusLabel(item.status) }} · {{ progressLabel(item) }} · {{ progressPercent(item) }}%
+              </div>
+              <div style="margin-top:6px;height:6px;background:var(--border);border-radius:999px;overflow:hidden">
+                <div :style="`height:100%;width:${progressPercent(item)}%;background:var(--color-accent-primary);border-radius:999px`"></div>
               </div>
             </div>
           </div>
         </div>
-      </Transition>
-    </Teleport>
+      </section>
+
+      <aside style="position:sticky;top:74px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <template v-if="selectedItem">
+          <img
+            v-if="selectedItem.posterPath"
+            :src="selectedItem.posterPath"
+            :alt="selectedItem.title"
+            style="width:100%;max-height:210px;object-fit:cover;border-radius:9px;border:1px solid var(--border)"
+          />
+          <h2 style="font-family:var(--font-display);font-weight:700;font-size:18px;margin:12px 0 8px;color:var(--text-primary)">
+            {{ selectedItem.title }}
+          </h2>
+
+          <label style="display:block;margin-bottom:12px">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Statut</div>
+            <select
+              :value="selectedItem.status"
+              @change="updateStatus(($event.target as HTMLSelectElement).value)"
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px"
+            >
+              <option value="TO_WATCH">À voir</option>
+              <option value="WATCHING">En cours</option>
+              <option value="COMPLETED">Terminé</option>
+              <option value="DROPPED">Abandonné</option>
+              <option value="ON_HOLD">En pause</option>
+            </select>
+          </label>
+
+          <label style="display:block;margin-bottom:4px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px;color:var(--text-secondary)">Progression</span>
+              <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary)">
+                {{ progressDraft }}/{{ totalEpisodes(selectedItem) || "?" }} · {{ progressPercentFromValue(progressDraft, selectedItem) }}%
+              </span>
+            </div>
+            <input
+              v-model.number="progressDraft"
+              type="range"
+              :min="0"
+              :max="Math.max(1, totalEpisodes(selectedItem) || Math.max(progressDraft, 1))"
+              step="1"
+              style="width:100%;accent-color:var(--color-accent-primary)"
+            />
+          </label>
+
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button
+              @click="saveProgress"
+              style="flex:1;padding:10px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer"
+            >
+              Enregistrer progression
+            </button>
+            <button
+              @click="removeItem(selectedItem.id)"
+              style="padding:10px 12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer"
+            >
+              Retirer
+            </button>
+          </div>
+
+          <NuxtLink
+            :to="`/animes/${selectedItem.animeId}`"
+            style="display:block;text-align:center;padding:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;font-size:13px;text-decoration:none"
+          >
+            Ouvrir la fiche anime
+          </NuxtLink>
+        </template>
+
+        <div v-else style="padding:18px 8px;text-align:center;color:var(--text-secondary);font-size:13px">
+          Sélectionne un anime de la liste pour afficher le détail.
+        </div>
+      </aside>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useWatchlist } from "../composables/useWatchlist";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
 import { io } from "socket.io-client";
 
 // Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
@@ -105,20 +161,34 @@ declare const useState: any;
 declare const onMounted: any;
 declare const onBeforeUnmount: any;
 declare const ref: any;
+declare const computed: any;
+declare const watch: any;
 
 definePageMeta({ middleware: "auth" });
 
-const { watchlist, loading, fetchWatchlist, updateStatus: updateWatchlistStatus, removeFromWatchlist } = useWatchlist();
-const selectedItem = ref(null as any);
+const {
+  watchlist,
+  loading,
+  fetchWatchlist,
+  updateStatus: updateWatchlistStatus,
+  updateProgress,
+  removeFromWatchlist,
+  reorderWatchlist,
+} = useWatchlist();
+
+const selectedItemId = ref(null as number | null);
 const draggedItemId = ref(null as number | null);
-const dragOverStatus = ref(null as string | null);
-const updatingItemId = ref(null as number | null);
+const dragOverItemId = ref(null as number | null);
+const progressDraft = ref(0);
 const runtimeConfig = useRuntimeConfig();
 
 let watchlistSocket: any = null;
 
 onMounted(async () => {
   await fetchWatchlist();
+  if (!selectedItemId.value && watchlist.value.length > 0) {
+    selectedItemId.value = watchlist.value[0].id;
+  }
 
   const token = useState("auth.token", () => "").value;
   if (!token) return;
@@ -143,27 +213,44 @@ onBeforeUnmount(() => {
   }
 });
 
-const tabs = [
-  { status: "TO_WATCH", label: "À voir" },
-  { status: "WATCHING", label: "En cours" },
-  { status: "COMPLETED", label: "Terminé" },
-  { status: "DROPPED", label: "Abandonné" },
-  { status: "ON_HOLD", label: "En pause" },
-];
+const selectedItem = computed(() =>
+  watchlist.value.find((item: any) => item.id === selectedItemId.value) || null,
+);
 
-const statusLabel = (s: string) => tabs.find(t => t.status === s)?.label ?? s;
-const countByStatus = (s: string) => watchlist.value.filter((w: any) => w.status === s).length;
-const itemsByStatus = (status: string) =>
-  watchlist.value.filter((w: any) => w.status === status);
+watch(
+  () => selectedItem.value,
+  (item: any) => {
+    progressDraft.value = Number(item?.progress || 0);
+  },
+  { immediate: true },
+);
+
+const statusLabel = (s: string) => {
+  const labels: Record<string, string> = {
+    TO_WATCH: "À voir",
+    WATCHING: "En cours",
+    COMPLETED: "Terminé",
+    DROPPED: "Abandonné",
+    ON_HOLD: "En pause",
+  };
+  return labels[s] || s;
+};
+
+const totalEpisodes = (item: any) => Number(item?.anime?.episodes || 0);
+
+const progressPercentFromValue = (progress: number, item: any) => {
+  const total = totalEpisodes(item);
+  if (total <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((progress / total) * 100)));
+};
+
+const progressPercent = (item: any) =>
+  progressPercentFromValue(Number(item?.progress || 0), item);
 
 const progressLabel = (item: any) => {
-  const current = Number(item.progress || 0);
-  const total = Number(item.anime?.episodes || 0);
-
-  if (total > 0) {
-    return `${current}/${total} épisodes`;
-  }
-
+  const current = Number(item?.progress || 0);
+  const total = totalEpisodes(item);
+  if (total > 0) return `${current}/${total} épisodes`;
   return `${current} épisode(s)`;
 };
 
@@ -171,38 +258,44 @@ const onDragStart = (itemId: number) => {
   draggedItemId.value = itemId;
 };
 
-const onDragOver = (status: string) => {
-  dragOverStatus.value = status;
-};
-
-const onDragLeave = (status: string) => {
-  if (dragOverStatus.value === status) {
-    dragOverStatus.value = null;
-  }
+const onDragOverItem = (itemId: number) => {
+  if (draggedItemId.value === itemId) return;
+  dragOverItemId.value = itemId;
 };
 
 const onDragEnd = () => {
   draggedItemId.value = null;
-  dragOverStatus.value = null;
+  dragOverItemId.value = null;
 };
 
-const onDrop = async (status: string) => {
-  if (!draggedItemId.value) return;
-
-  const item = watchlist.value.find((w: any) => w.id === draggedItemId.value);
-  if (!item || item.status === status) {
+const onDropOnItem = async (targetId: number) => {
+  if (!draggedItemId.value || draggedItemId.value === targetId) {
     onDragEnd();
     return;
   }
 
+  const sourceIndex = watchlist.value.findIndex((item: any) => item.id === draggedItemId.value);
+  const targetIndex = watchlist.value.findIndex((item: any) => item.id === targetId);
+
+  if (sourceIndex < 0 || targetIndex < 0) {
+    onDragEnd();
+    return;
+  }
+
+  const snapshot = [...watchlist.value];
+  const reordered = [...watchlist.value];
+  const [moved] = reordered.splice(sourceIndex, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  watchlist.value = reordered;
+
   try {
-    updatingItemId.value = item.id;
-    await updateWatchlistStatus(item.id, status);
-    await fetchWatchlist();
+    await reorderWatchlist(reordered.map((item: any) => item.id));
   } catch (e) {
+    watchlist.value = snapshot;
+    await fetchWatchlist();
     console.error(e);
   } finally {
-    updatingItemId.value = null;
     onDragEnd();
   }
 };
@@ -211,36 +304,44 @@ const updateStatus = async (newStatus: string) => {
   if (!selectedItem.value) return;
   try {
     await updateWatchlistStatus(selectedItem.value.id, newStatus);
-    selectedItem.value = null;
     await fetchWatchlist();
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+const saveProgress = async () => {
+  if (!selectedItem.value) return;
+  try {
+    await updateProgress(selectedItem.value.id, Number(progressDraft.value || 0));
+    await fetchWatchlist();
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 const removeItem = async (id: number) => {
   try {
     await removeFromWatchlist(id);
-    selectedItem.value = null;
-  } catch (e) { console.error(e); }
+    if (selectedItemId.value === id) {
+      selectedItemId.value = watchlist.value[0]?.id ?? null;
+    }
+  } catch (e) {
+    console.error(e);
+  }
 };
 </script>
 
 <style scoped>
-.at-fade-enter-active, .at-fade-leave-active { transition: opacity 0.2s ease; }
-.at-fade-enter-from, .at-fade-leave-to { opacity: 0; }
-
-@media (max-width: 640px) {
+@media (max-width: 980px) {
   .watchlist-page {
-    padding: 16px 14px 28px !important;
+    padding: 16px 14px 30px !important;
   }
+}
 
-  .watchlist-modal-body {
-    flex-direction: column;
-    padding: 16px !important;
-    gap: 14px !important;
-  }
-
-  .watchlist-modal-actions {
-    flex-direction: column;
+@media (max-width: 980px) {
+  .watchlist-layout {
+    grid-template-columns: 1fr !important;
   }
 }
 </style>
