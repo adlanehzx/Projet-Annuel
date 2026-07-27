@@ -53,17 +53,34 @@
           :disabled="requiresTwoFactor"
         />
 
-        <input
-          v-if="requiresTwoFactor"
-          v-model="form.totpToken"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="Code 2FA (6 chiffres)"
-          class="at-input"
-          maxlength="6"
-          required
-        />
+        <template v-if="requiresTwoFactor">
+          <input
+            v-if="!useBackupCode"
+            v-model="form.totpToken"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="Code 2FA (6 chiffres)"
+            class="at-input"
+            maxlength="6"
+            required
+          />
+          <input
+            v-else
+            v-model="form.backupCode"
+            type="text"
+            placeholder="Code de secours (XXXX-XXXX)"
+            class="at-input"
+            required
+          />
+          <button
+            type="button"
+            style="background:none;border:none;padding:0;text-align:left;font-size:12px;color:var(--color-accent-secondary);cursor:pointer;width:fit-content"
+            @click="useBackupCode = !useBackupCode"
+          >
+            {{ useBackupCode ? "Utiliser le code de l'application" : "Utiliser un code de secours" }}
+          </button>
+        </template>
 
         <div v-if="error" style="padding:10px 14px;background:rgba(214,67,43,0.1);border:1px solid rgba(214,67,43,0.3);border-radius:8px;font-size:13px;color:var(--color-accent-primary)">
           {{ error }}
@@ -92,20 +109,28 @@
 const { login, loginWithGoogle, loginWithGithub, isLoading, error: authError } =
   useAuth();
 const config = useRuntimeConfig();
+const { ensureLoaded, prompt } = useGoogleAuth();
 
 const form = reactive({
   email: "",
   password: "",
   totpToken: "",
+  backupCode: "",
 });
 
 const error = ref("");
 const requiresTwoFactor = ref(false);
+const useBackupCode = ref(false);
 
 const handleLogin = async () => {
   try {
     error.value = "";
-    await login(form.email, form.password, form.totpToken || undefined);
+    await login(
+      form.email,
+      form.password,
+      form.totpToken || undefined,
+      form.backupCode || undefined,
+    );
     await navigateTo("/");
   } catch (err: any) {
     if (err.response?.data?.requiresTwoFactor) {
@@ -137,7 +162,7 @@ const handleGoogleCredential = async (response: { credential: string }) => {
 };
 
 const handleGoogleClick = () => {
-  (window as any).google?.accounts?.id?.prompt();
+  prompt();
 };
 
 onMounted(() => {
@@ -146,17 +171,6 @@ onMounted(() => {
     return;
   }
 
-  if (!config.public.googleClientId) return;
-
-  const script = document.createElement("script");
-  script.src = "https://accounts.google.com/gsi/client";
-  script.async = true;
-  script.onload = () => {
-    (window as any).google?.accounts?.id?.initialize({
-      client_id: config.public.googleClientId,
-      callback: handleGoogleCredential,
-    });
-  };
-  document.head.appendChild(script);
+  ensureLoaded(handleGoogleCredential);
 });
 </script>

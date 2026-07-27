@@ -8,6 +8,31 @@
 
       <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;text-align:center;margin:0 0 4px">Cr&#233;er un compte</h1>
 
+      <!-- OAuth -->
+      <button
+        type="button"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer"
+        @click="handleGoogleClick"
+      >
+        <span style="font-family:var(--font-display);font-weight:700;color:var(--color-accent-secondary)">G</span>
+        Continuer avec Google
+      </button>
+      <button
+        type="button"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer"
+        @click="handleGithubLogin"
+      >
+        <span style="font-family:var(--font-display);font-weight:700">GH</span>
+        Continuer avec GitHub
+      </button>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:12px;margin:4px 0">
+        <span style="flex:1;height:1px;background:var(--border)"></span>
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">ou</span>
+        <span style="flex:1;height:1px;background:var(--border)"></span>
+      </div>
+
       <form @submit.prevent="handleRegister" style="display:flex;flex-direction:column;gap:12px">
         <input v-model="form.username" type="text" placeholder="Nom d'utilisateur" class="at-input" required />
         <input v-model="form.email" type="email" placeholder="Email" class="at-input" required />
@@ -32,7 +57,11 @@
 </template>
 
 <script setup lang="ts">
-const { register, isLoading, error: authError } = useAuth();
+const { register, loginWithGoogle, loginWithGithub, isLoading, error: authError } =
+  useAuth();
+const config = useRuntimeConfig();
+const { ensureLoaded, prompt } = useGoogleAuth();
+
 const form = reactive({ username: "", email: "", password: "", confirmPassword: "" });
 const error = ref("");
 
@@ -47,4 +76,36 @@ const handleRegister = async () => {
     error.value = authError.value || "Erreur lors de l'inscription";
   }
 };
+
+const handleGithubLogin = () => {
+  const params = new URLSearchParams({
+    client_id: config.public.githubClientId as string,
+    redirect_uri: config.public.githubRedirectUri as string,
+    scope: "read:user user:email",
+  });
+  window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+};
+
+const handleGoogleCredential = async (response: { credential: string }) => {
+  try {
+    error.value = "";
+    await loginWithGoogle(response.credential);
+    await navigateTo("/");
+  } catch {
+    error.value = authError.value || "Identifiants invalides";
+  }
+};
+
+const handleGoogleClick = () => {
+  prompt();
+};
+
+onMounted(() => {
+  if (useAuth().isAuthenticated.value) {
+    navigateTo("/");
+    return;
+  }
+
+  ensureLoaded(handleGoogleCredential);
+});
 </script>
