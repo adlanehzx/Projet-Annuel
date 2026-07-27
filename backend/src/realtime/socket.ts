@@ -14,3 +14,12 @@ export const emitToUser = (
   if (!io) return;
   io.to(`user:${userId}`).emit(event, payload);
 };
+
+export const emitToRoom = (
+  room: string,
+  event: string,
+  payload: Record<string, unknown>,
+) => {
+  if (!io) return;
+  io.to(room).emit(event, payload);
+};

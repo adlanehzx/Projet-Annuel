@@ -55,6 +55,16 @@ io.on("connection", (socket) => {
   if (typeof userId === "number") {
     socket.join(`user:${userId}`);
   }
+
+  socket.on("subscribe:anime", (animeId: number) => {
+    if (typeof animeId !== "number" || Number.isNaN(animeId)) return;
+    socket.join(`anime:${animeId}`);
+  });
+
+  socket.on("unsubscribe:anime", (animeId: number) => {
+    if (typeof animeId !== "number" || Number.isNaN(animeId)) return;
+    socket.leave(`anime:${animeId}`);
+  });
 });
 
 setSocketServer(io);

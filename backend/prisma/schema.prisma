@@ -29,6 +29,7 @@ model User {
 
   watchlist Watchlist[]
   reviews Review[]
+  reviewLikes ReviewLike[]
   collections Collection[]
   lists List[]
   createdAt DateTime @default(now())
@@ -71,12 +72,26 @@ model Review {
   watchlistId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  likes ReviewLike[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, watchlistId])
   @@index([userId])
   @@index([watchlistId])
+}
+
+model ReviewLike {
+  id Int @id @default(autoincrement())
+  userId Int
+  reviewId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+  @@index([userId])
 }
 
 // Collections personnalisées (listes thématiques)

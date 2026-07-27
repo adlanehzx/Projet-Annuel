@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { recalculateAnimeRatingByWatchlistId } from "../services/animeRatings.js";
+import { emitToRoom } from "../realtime/socket.js";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -77,13 +78,26 @@ router.put("/:id", async (req: Request, res: Response) => {
 
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const reviews = await prisma.review.findMany({
       where: { watchlistId: parseInt(req.params.watchlistId) },
-      include: { user: { select: { username: true } } },
+      include: {
+        user: { select: { username: true } },
+        likes: userId ? { where: { userId }, select: { id: true } } : false,
+        _count: { select: { likes: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    res.json(reviews);
+    const payload = reviews.map((review) => ({
+      ...review,
+      likesCount: review._count.likes,
+      likedByMe: userId ? review.likes.length > 0 : false,
+      likes: undefined,
+      _count: undefined,
+    }));
+
+    res.json(payload);
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }
@@ -123,6 +137,91 @@ router.delete("/:id", async (req: Request, res: Response) => {
     await prisma.review.delete({ where: { id: parseInt(req.params.id) } });
     await recalculateAnimeRatingByWatchlistId(deletedWatchlistId);
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.post("/:id/like", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const reviewId = parseInt(req.params.id);
+    if (Number.isNaN(reviewId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { watchlist: { select: { animeId: true } } },
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: "Review introuvable" });
+    }
+
+    await prisma.reviewLike.upsert({
+      where: {
+        userId_reviewId: {
+          userId,
+          reviewId,
+        },
+      },
+      create: {
+        userId,
+        reviewId,
+      },
+      update: {},
+    });
+
+    const likesCount = await prisma.reviewLike.count({ where: { reviewId } });
+
+    emitToRoom(`anime:${review.watchlist.animeId}`, "review:like-updated", {
+      reviewId,
+      likesCount,
+    });
+
+    res.json({ reviewId, likesCount, likedByMe: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.delete("/:id/like", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const reviewId = parseInt(req.params.id);
+    if (Number.isNaN(reviewId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { watchlist: { select: { animeId: true } } },
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: "Review introuvable" });
+    }
+
+    await prisma.reviewLike.deleteMany({
+      where: {
+        userId,
+        reviewId,
+      },
+    });
+
+    const likesCount = await prisma.reviewLike.count({ where: { reviewId } });
+
+    emitToRoom(`anime:${review.watchlist.animeId}`, "review:like-updated", {
+      reviewId,
+      likesCount,
+    });
+
+    res.json({ reviewId, likesCount, likedByMe: false });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }

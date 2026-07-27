@@ -16,6 +16,16 @@
       <div style="margin-top:6px;font-size:14px;line-height:1.55;color:var(--text-secondary)">
         {{ review.comment || "Aucun commentaire." }}
       </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <button
+          @click="emit('toggle-like', review)"
+          :disabled="loadingLike"
+          style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--text-secondary);cursor:pointer"
+        >
+          <span :style="`color:${review.likedByMe ? 'var(--color-accent-primary)' : 'var(--text-secondary)'}`">♥</span>
+          <span>{{ review.likesCount || 0 }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -26,10 +36,21 @@ const props = defineProps<{
     id: number;
     rating: number;
     comment?: string | null;
+    likesCount?: number;
+    likedByMe?: boolean;
     user?: {
       username?: string | null;
     };
   };
+  loadingLike?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "toggle-like", review: {
+    id: number;
+    likedByMe?: boolean;
+    likesCount?: number;
+  }): void;
 }>();
 
 const username = computed(() => props.review.user?.username || "Anonyme");

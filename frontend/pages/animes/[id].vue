@@ -78,7 +78,13 @@
 
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:36px 0 14px;color:var(--text-primary)">Reviews ({{ communityReviews.length }})</h2>
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
-        <ReviewCard v-for="review in communityReviews" :key="review.id" :review="review" />
+        <ReviewCard
+          v-for="review in communityReviews"
+          :key="review.id"
+          :review="review"
+          :loading-like="likeLoadingReviewId === review.id"
+          @toggle-like="toggleLike"
+        />
         <div v-if="communityReviews.length === 0" style="padding:28px;border:1px dashed var(--border);border-radius:10px;text-align:center;color:var(--text-secondary);font-size:14px">
           Aucune review pour l'instant.
           <button v-if="!reviewOpen" @click="requireAuth(() => reviewOpen = true)" style="margin-top:12px;display:block;margin-inline:auto;padding:8px 16px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer">Écrire la première review</button>
@@ -94,21 +100,26 @@ import { useAnimes } from "../../composables/useAnimes";
 import { useReviews } from "../../composables/useReviews";
 import { useAuth } from "../../composables/useAuth";
 import { useAuthGuard } from "../../composables/useAuthGuard";
+import { io } from "socket.io-client";
 
 // Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
 declare const useRoute: () => any;
+declare const useRuntimeConfig: any;
+declare const useState: any;
 declare const ref: any;
 declare const computed: any;
 declare const onMounted: any;
+declare const onBeforeUnmount: any;
 
 const route = useRoute();
 const animeId = parseInt(route.params.id as string);
 
 const { getAnimeDetails } = useAnimes();
 const { fetchWatchlist, getWatchlistItem, addToWatchlist, updateStatus, removeFromWatchlist: removeWatchlistItem } = useWatchlist();
-const { getReview, getMovieReviews, createOrUpdateReview } = useReviews();
+const { getReview, getMovieReviews, createOrUpdateReview, likeReview, unlikeReview } = useReviews();
 const { isAuthenticated } = useAuth();
 const { requireAuth } = useAuthGuard();
+const runtimeConfig = useRuntimeConfig();
 
 const anime = ref(null as any);
 const loading = ref(true);
@@ -118,6 +129,18 @@ const reviewLoading = ref(false);
 const reviewError = ref("");
 const myReview = ref({ id: null as number | null, rating: 7, comment: "" });
 const communityReviews = ref([] as any[]);
+const likeLoadingReviewId = ref(null as number | null);
+
+let animeSocket: any = null;
+
+const handleLikeUpdated = (payload: { reviewId: number; likesCount: number }) => {
+  const idx = communityReviews.value.findIndex((r: any) => r.id === payload.reviewId);
+  if (idx === -1) return;
+  communityReviews.value[idx] = {
+    ...communityReviews.value[idx],
+    likesCount: payload.likesCount,
+  };
+};
 
 onMounted(async () => {
   try {
@@ -129,8 +152,34 @@ onMounted(async () => {
       if (rev) myReview.value = rev;
       communityReviews.value = await getMovieReviews(wi.id);
     }
+
+    const token = useState("auth.token", () => "").value;
+    if (token) {
+      const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+      const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+      animeSocket = io(socketUrl, {
+        transports: ["websocket"],
+        auth: { token },
+      });
+
+      animeSocket.on("connect", () => {
+        animeSocket.emit("subscribe:anime", animeId);
+      });
+
+      animeSocket.on("review:like-updated", handleLikeUpdated);
+    }
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
+});
+
+onBeforeUnmount(() => {
+  if (animeSocket) {
+    animeSocket.emit("unsubscribe:anime", animeId);
+    animeSocket.off("review:like-updated", handleLikeUpdated);
+    animeSocket.disconnect();
+    animeSocket = null;
+  }
 });
 
 const watchlistItem = computed(() => getWatchlistItem.value(animeId));
@@ -208,6 +257,30 @@ const saveReview = async (payload: {
     console.error(e);
   }
   finally { reviewLoading.value = false; }
+};
+
+const toggleLike = async (review: { id: number; likedByMe?: boolean }) => {
+  await requireAuth(async () => {
+    try {
+      likeLoadingReviewId.value = review.id;
+      const result = review.likedByMe
+        ? await unlikeReview(review.id)
+        : await likeReview(review.id);
+
+      const idx = communityReviews.value.findIndex((r: any) => r.id === review.id);
+      if (idx === -1) return;
+
+      communityReviews.value[idx] = {
+        ...communityReviews.value[idx],
+        likesCount: result.likesCount,
+        likedByMe: result.likedByMe,
+      };
+    } catch (e) {
+      console.error(e);
+    } finally {
+      likeLoadingReviewId.value = null;
+    }
+  });
 };
 </script>
 
