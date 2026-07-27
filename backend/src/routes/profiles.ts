@@ -112,7 +112,13 @@ router.get("/:username/reviews", async (req: Request, res: Response) => {
       skip: offset,
     });
 
-    res.json(reviews);
+    res.json(
+      reviews.map((r) => ({
+        ...r,
+        watchlist: undefined,
+        watchlistItem: r.watchlist,
+      })),
+    );
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }
