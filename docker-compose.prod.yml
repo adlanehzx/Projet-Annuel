@@ -41,11 +41,11 @@ services:
       - PORT=3001
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:?DB_PASSWORD manquant dans .env}@db:5432/cinetrack
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET manquant dans .env}
-      - FRONTEND_URL=https://ankotrack.fr
+      - FRONTEND_URL=https://hankotrack.com
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
-      - GITHUB_REDIRECT_URI=https://ankotrack.fr/auth/callback/github
+      - GITHUB_REDIRECT_URI=https://hankotrack.com/auth/callback/github
       - LIBRETRANSLATE_URL=http://libretranslate:5000
     depends_on:
       db:
@@ -60,11 +60,11 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: cinetrack-frontend
     environment:
-      - NUXT_PUBLIC_API_BASE=https://ankotrack.fr/api
+      - NUXT_PUBLIC_API_BASE=https://hankotrack.com/api
       - NUXT_API_BASE=http://backend:3001/api
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - NUXT_PUBLIC_GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - NUXT_PUBLIC_GITHUB_REDIRECT_URI=https://ankotrack.fr/auth/callback/github
+      - NUXT_PUBLIC_GITHUB_REDIRECT_URI=https://hankotrack.com/auth/callback/github
     depends_on:
       - backend
     networks:

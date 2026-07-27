@@ -1,4 +1,4 @@
-ankotrack.fr, www.ankotrack.fr {
+hankotrack.com, www.hankotrack.com {
 	handle /api/* {
 		reverse_proxy backend:3001
 	}
