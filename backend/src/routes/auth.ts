@@ -13,13 +13,10 @@ import {
 import { verifyGoogleIdToken, exchangeGithubCode } from "../services/oauth.js";
 import { authMiddleware } from "../middleware/auth.js";
 import type { OAuthProfile } from "../services/oauth.js";
+import { emitToAll } from "../realtime/socket.js";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// ====== Authentication Standard ======
-
-// POST /api/auth/register - Inscription
 router.post("/register", async (req: Request, res: Response) => {
   try {
     const { email, username, password } = req.body;
@@ -34,6 +31,8 @@ router.post("/register", async (req: Request, res: Response) => {
       },
     });
 
+    emitToAll("stats:global-changed", { reason: "user-created" });
+
     res.status(201).json({
       id: user.id,
       email: user.email,
@@ -45,8 +44,6 @@ router.post("/register", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// POST /api/auth/login - Connexion
 router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password, totpToken, backupCode } = req.body;
@@ -90,11 +87,6 @@ router.post("/login", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// ====== Two-Factor Authentication (2FA) ======
-// Toutes ces routes nécessitent un utilisateur authentifié (authMiddleware).
-
-// POST /api/auth/2fa/setup - Générer QR code pour 2FA
 router.post(
   "/2fa/setup",
   authMiddleware,
@@ -118,8 +110,6 @@ router.post(
     }
   },
 );
-
-// POST /api/auth/2fa/enable - Activer 2FA avec vérification
 router.post(
   "/2fa/enable",
   authMiddleware,
@@ -130,8 +120,6 @@ router.post(
 
       if (!secret || !totpToken)
         return res.status(400).json({ error: "Données manquantes" });
-
-      // Vérifier que le token est correct
       if (!verifyTOTPToken(secret, totpToken))
         return res.status(400).json({ error: "Token invalide" });
 
@@ -156,8 +144,6 @@ router.post(
     }
   },
 );
-
-// POST /api/auth/2fa/disable - Désactiver 2FA
 router.post(
   "/2fa/disable",
   authMiddleware,
@@ -192,8 +178,6 @@ router.post(
     }
   },
 );
-
-// GET /api/auth/2fa/status - Vérifier le statut 2FA
 router.get(
   "/2fa/status",
   authMiddleware,
@@ -251,8 +235,6 @@ router.post(
   },
 );
 
-// ====== OAuth2 ======
-
 const findOrCreateOAuthUser = async (
   provider: "google" | "github",
   profile: OAuthProfile,
@@ -282,10 +264,6 @@ const findOrCreateOAuthUser = async (
 
   return user;
 };
-
-// POST /api/auth/oauth/google - Connexion via Google
-// Le frontend envoie l'id_token émis par Google Identity Services ; il est
-// vérifié auprès de Google avant toute création/liaison de compte.
 router.post("/oauth/google", async (req: Request, res: Response) => {
   try {
     const { idToken } = req.body;
@@ -308,11 +286,6 @@ router.post("/oauth/google", async (req: Request, res: Response) => {
       .json({ error: error.message || "Authentification Google invalide" });
   }
 });
-
-// POST /api/auth/oauth/github - Connexion via GitHub
-// Le frontend envoie le code d'autorisation reçu de GitHub ; il est échangé
-// contre un access_token côté serveur (le client secret ne quitte jamais
-// le backend) avant toute création/liaison de compte.
 router.post("/oauth/github", async (req: Request, res: Response) => {
   try {
     const { code } = req.body;
@@ -335,8 +308,6 @@ router.post("/oauth/github", async (req: Request, res: Response) => {
       .json({ error: error.message || "Authentification GitHub invalide" });
   }
 });
-
-// GET /api/auth/profile - Récupérer le profil de l'utilisateur
 router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
@@ -360,8 +331,6 @@ router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// PUT /api/auth/profile - Mettre à jour le profil
 router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;

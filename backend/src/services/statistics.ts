@@ -14,15 +14,12 @@ export interface UserStatistics {
 export const getUserStatistics = async (
   userId: number,
 ): Promise<UserStatistics> => {
-  // Total animes vus (COMPLETED status)
   const completedCount = await prisma.watchlist.count({
     where: {
       userId,
       status: "COMPLETED",
     },
   });
-
-  // Reviews et notes
   const reviews = await prisma.review.findMany({
     where: { userId },
     select: { rating: true },
@@ -31,8 +28,6 @@ export const getUserStatistics = async (
   const totalWatchlist = await prisma.watchlist.count({
     where: { userId },
   });
-
-  // Stats de base
   const stats: UserStatistics = {
     totalAnimesWatched: completedCount,
     totalEpisodesWatched: 0, // Nécessite des données d'épisodes dans la DB
@@ -61,6 +56,14 @@ export const getBasicStatistics = async (userId: number) => {
     where: { userId, status: "TO_WATCH" },
   });
 
+  const droppedAnimes = await prisma.watchlist.count({
+    where: { userId, status: "DROPPED" },
+  });
+
+  const onHoldAnimes = await prisma.watchlist.count({
+    where: { userId, status: "ON_HOLD" },
+  });
+
   const reviews = await prisma.review.findMany({
     where: { userId },
     select: { rating: true },
@@ -80,7 +83,14 @@ export const getBasicStatistics = async (userId: number) => {
       completed: completedAnimes,
       watching: watchingAnimes,
       toWatch: toWatchAnimes,
-      total: completedAnimes + watchingAnimes + toWatchAnimes,
+      dropped: droppedAnimes,
+      onHold: onHoldAnimes,
+      total:
+        completedAnimes +
+        watchingAnimes +
+        toWatchAnimes +
+        droppedAnimes +
+        onHoldAnimes,
     },
     reviews: {
       total: reviews.length,
@@ -90,15 +100,38 @@ export const getBasicStatistics = async (userId: number) => {
   };
 };
 
-/**
- * Récupère des statistiques avancées incluant:
- * - Total d'animes regardés
- * - Répartition par statut (À voir, En cours, Terminé)
- * - Note moyenne donnée
- * - Top animes les mieux notés
- * - Anime avec les plus basses notes
- * - Historique des notes sur le temps
- */
+export const getTopGenres = async (userId: number) => {
+  const watchlistItems = await prisma.watchlist.findMany({
+    where: { userId },
+    select: {
+      anime: {
+        select: {
+          genres: {
+            select: {
+              genre: {
+                select: { name: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const counts: Record<string, number> = {};
+
+  watchlistItems.forEach((item) => {
+    item.anime.genres.forEach((animeGenre) => {
+      const name = animeGenre.genre.name;
+      counts[name] = (counts[name] || 0) + 1;
+    });
+  });
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+};
 export const getAdvancedStatistics = async (userId: number) => {
   const watchlist = await prisma.watchlist.findMany({
     where: { userId },
@@ -119,15 +152,11 @@ export const getAdvancedStatistics = async (userId: number) => {
     },
     orderBy: { createdAt: "desc" },
   });
-
-  // Statistiques par statut
   const completedCount = watchlist.filter(
     (w) => w.status === "COMPLETED",
   ).length;
   const watchingCount = watchlist.filter((w) => w.status === "WATCHING").length;
   const toWatchCount = watchlist.filter((w) => w.status === "TO_WATCH").length;
-
-  // Notes
   const ratedItems = watchlist.filter((w) => w.reviews.length > 0);
   const allRatings = ratedItems.flatMap((w) => w.reviews.map((r) => r.rating));
   const averageRating =
@@ -136,8 +165,6 @@ export const getAdvancedStatistics = async (userId: number) => {
           (allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 100,
         ) / 100
       : 0;
-
-  // Top animes les mieux notés
   const topRated = ratedItems
     .map((w) => ({
       title: w.title,
@@ -146,8 +173,6 @@ export const getAdvancedStatistics = async (userId: number) => {
     }))
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 5);
-
-  // Animes avec les plus basses notes
   const worstRated = ratedItems
     .map((w) => ({
       title: w.title,
@@ -156,8 +181,6 @@ export const getAdvancedStatistics = async (userId: number) => {
     }))
     .sort((a, b) => a.rating - b.rating)
     .slice(0, 5);
-
-  // Distribution des notes
   const ratingDistribution = {
     "10": allRatings.filter((r) => r === 10).length,
     "9": allRatings.filter((r) => r === 9).length,
@@ -170,8 +193,6 @@ export const getAdvancedStatistics = async (userId: number) => {
     "2": allRatings.filter((r) => r === 2).length,
     "1": allRatings.filter((r) => r === 1).length,
   };
-
-  // Statistiques temporelles
   const reviewsByMonth = allReviews.reduce(
     (acc, review) => {
       const date = new Date(review.createdAt);
@@ -201,13 +222,7 @@ export const getAdvancedStatistics = async (userId: number) => {
     },
   };
 };
-
-/**
- * Récupère des recommandations basées sur les préférences de l'utilisateur
- * (Les animes similaires à ceux qu'il a notés 8+)
- */
 export const getRecommendations = async (userId: number) => {
-  // Récupérer les animes les mieux notés par l'utilisateur
   const topRatedAnimes = await prisma.watchlist.findMany({
     where: {
       userId,
@@ -228,10 +243,6 @@ export const getRecommendations = async (userId: number) => {
     },
     take: 10,
   });
-
-  // Pour l'instant, retourner simplement les anime similaires à ceux aimés
-  // Une implémentation complète nécessiterait une intégration avec l'API TMDB
-  // pour obtenir les genres et les animes similaires
   const recommendations = topRatedAnimes.map((anime) => ({
     based_on_title: anime.title,
     based_on_rating: anime.reviews[0]?.rating,

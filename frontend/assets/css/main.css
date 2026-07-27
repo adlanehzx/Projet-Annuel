@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design System Tokens ─────────────────────────────── */
 :root {
   --bg: #E6DAD2;
   --bg-elevated: #EFE9E3;
@@ -31,7 +30,6 @@
   --border: #3C3F4D;
 }
 
-/* ── Base ─────────────────────────────────────────────── */
 html { scroll-behavior: smooth; }
 
 body {
@@ -41,7 +39,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Utility classes ──────────────────────────────────── */
 .at-surface {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -100,7 +97,6 @@ body {
 }
 .at-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
 
-/* ── Legacy compat (pages encore non migrées) ─────────── */
 .card { @apply at-card; }
 .btn { @apply at-btn-primary; }
 .btn-primary { background: var(--color-accent-primary) !important; }

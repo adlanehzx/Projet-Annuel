@@ -12,10 +12,6 @@ export interface OAuthProfile {
 const googleClient = env.googleClientId
   ? new OAuth2Client(env.googleClientId)
   : null;
-
-// Vérifie l'id_token émis par Google Identity Services directement auprès
-// de Google (signature, audience, expiration) - le client ne peut pas
-// forger un profil arbitraire.
 export const verifyGoogleIdToken = async (
   idToken: string,
 ): Promise<OAuthProfile> => {
@@ -49,10 +45,6 @@ interface GithubEmail {
   primary: boolean;
   verified: boolean;
 }
-
-// Échange le code d'autorisation OAuth contre un access_token côté serveur
-// (le client secret ne quitte jamais le backend), puis récupère le profil
-// GitHub authentifié par ce token - impossible à forger depuis le client.
 export const exchangeGithubCode = async (
   code: string,
 ): Promise<OAuthProfile> => {

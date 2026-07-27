@@ -12,6 +12,10 @@ export default defineNuxtConfig({
       githubRedirectUri:
         process.env.NUXT_PUBLIC_GITHUB_REDIRECT_URI ||
         "http://localhost:3000/auth/callback/github",
+      analyticsProvider: process.env.NUXT_PUBLIC_ANALYTICS_PROVIDER || "",
+      analyticsScriptSrc: process.env.NUXT_PUBLIC_ANALYTICS_SCRIPT_SRC || "",
+      analyticsWebsiteId: process.env.NUXT_PUBLIC_ANALYTICS_WEBSITE_ID || "",
+      analyticsDomain: process.env.NUXT_PUBLIC_ANALYTICS_DOMAIN || "",
     },
   },
 

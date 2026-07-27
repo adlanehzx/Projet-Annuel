@@ -13,6 +13,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
+const roundSvg = "/images/animetrack-maneki-neko-round.svg";
+const roundPng = "/images/animetrack-maneki-neko-round.png";
+
 const props = withDefaults(
   defineProps<{
     size?: number | string;
@@ -29,9 +32,6 @@ const props = withDefaults(
 );
 
 const pxSize = computed(() => (typeof props.size === "number" ? `${props.size}px` : props.size));
-
-const roundSvg = new URL("../assets/images/animetrack-maneki-neko-round.svg", import.meta.url).href;
-const roundPng = new URL("../assets/images/animetrack-maneki-neko-round.png", import.meta.url).href;
 
 const src = computed(() => (props.format === "png" ? roundPng : roundSvg));
 

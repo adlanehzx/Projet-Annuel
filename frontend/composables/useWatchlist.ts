@@ -53,12 +53,36 @@ export const useWatchlist = () => {
     }
   };
 
+  const updateProgress = async (id: number, progress: number) => {
+    try {
+      const response = await api.put(`/watchlist/${id}/progress`, { progress });
+      const index = watchlist.value.findIndex((item: any) => item.id === id);
+      if (index !== -1) {
+        watchlist.value[index] = response.data;
+      }
+      return response.data;
+    } catch (e: any) {
+      error.value =
+        e.response?.data?.error || "Erreur lors de la mise à jour de la progression";
+      throw e;
+    }
+  };
+
   const removeFromWatchlist = async (id: number) => {
     try {
       await api.del(`/watchlist/${id}`);
       watchlist.value = watchlist.value.filter((item: any) => item.id !== id);
     } catch (e: any) {
       error.value = e.response?.data?.error || "Erreur lors de la suppression";
+      throw e;
+    }
+  };
+
+  const reorderWatchlist = async (watchlistIds: number[]) => {
+    try {
+      await api.put("/watchlist/reorder", { watchlistIds });
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Erreur lors du classement";
       throw e;
     }
   };
@@ -78,7 +102,9 @@ export const useWatchlist = () => {
     fetchWatchlist,
     addToWatchlist,
     updateStatus,
+    updateProgress,
     removeFromWatchlist,
+    reorderWatchlist,
     isInWatchlist,
     getWatchlistItem,
   };

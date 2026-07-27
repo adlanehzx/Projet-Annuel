@@ -1,9 +1,8 @@
 <template>
   <div :class="isDark ? 'dark' : ''" style="min-height:100vh;background:var(--bg);color:var(--text-primary);font-family:var(--font-body)">
 
-    <!-- ══════════ NON CONNECTÉ · landing ══════════ -->
     <template v-if="!auth.isAuthenticated.value">
-      <header :style="landingHeaderVars" style="background:var(--bg-elevated);color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;height:64px;position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)">
+      <header v-if="!isMobile" :style="landingHeaderVars" style="background:var(--bg-elevated);color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;height:64px;position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:10px;text-decoration:none">
           <BrandSeal :size="30" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
           <span style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">AnimeTrack</span>
@@ -14,13 +13,21 @@
         <NuxtLink to="/auth/register" style="padding:9px 18px;background:var(--color-accent-primary);color:#FFFFFF;border-radius:8px;font-family:var(--font-body);font-weight:500;font-size:14px;text-decoration:none;white-space:nowrap">Commencer</NuxtLink>
         <button @click="toggleDark" aria-label="Basculer thème" style="width:36px;height:36px;border-radius:999px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:15px;cursor:pointer;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center">{{ isDark ? '☀️' : '🌙' }}</button>
       </header>
+      <header v-else :style="landingHeaderVars" style="height:56px;background:var(--bg-elevated);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 12px;position:sticky;top:0;z-index:50">
+        <NuxtLink to="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
+          <BrandSeal :size="24" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
+          <span style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)">AnimeTrack</span>
+        </NuxtLink>
+        <span style="flex:1"></span>
+        <NuxtLink to="/animes" style="font-family:var(--font-body);font-size:13px;color:var(--text-secondary);text-decoration:none;padding:6px 4px;white-space:nowrap">Catalogue</NuxtLink>
+        <NuxtLink to="/auth/login" style="font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--text-primary);text-decoration:none;padding:7px 8px;white-space:nowrap">Connexion</NuxtLink>
+        <button @click="toggleDark" aria-label="Basculer thème" style="width:32px;height:32px;border-radius:999px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">{{ isDark ? '☀️' : '🌙' }}</button>
+      </header>
       <NuxtPage />
     </template>
 
-    <!-- ══════════ CONNECTÉ · DESKTOP · sidebar rétractable ══════════ -->
     <div v-else-if="!isMobile" style="display:flex;min-height:100vh">
       <aside :style="`width:${collapsed ? '72px' : '238px'};flex-shrink:0;background:var(--bg-elevated);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:${collapsed ? '22px 12px' : '22px 16px'};gap:18px;overflow-y:auto;overflow-x:hidden;transition:width 180ms ease-out;height:100vh;position:sticky;top:0;z-index:40`">
-        <!-- En-tête sidebar -->
         <div :style="`display:flex;align-items:center;justify-content:${collapsed ? 'center' : 'space-between'};gap:8px;flex-wrap:${collapsed ? 'wrap' : 'nowrap'}`">
           <NuxtLink to="/" aria-label="AnimeTrack — accueil" style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:0 4px">
             <BrandSeal :size="30" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
@@ -31,7 +38,6 @@
           </button>
         </div>
 
-        <!-- Groupes de navigation -->
         <div v-for="group in navGroups" :key="group.title">
           <div v-if="!collapsed" style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--text-secondary);padding:0 10px;margin-bottom:8px">{{ group.title }}</div>
           <div style="display:flex;flex-direction:column;gap:2px">
@@ -44,7 +50,6 @@
 
         <span style="flex:1"></span>
 
-        <!-- Compte -->
         <div :style="`display:flex;align-items:center;justify-content:${collapsed ? 'center' : 'flex-start'};gap:10px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:${collapsed ? 'wrap' : 'nowrap'}`">
           <div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;flex-shrink:0">{{ initials }}</div>
           <div v-if="!collapsed" style="flex:1;min-width:0">
@@ -65,7 +70,6 @@
       </main>
     </div>
 
-    <!-- ══════════ CONNECTÉ · MOBILE · topbar + tabs ══════════ -->
     <div v-else style="display:flex;flex-direction:column;min-height:100vh">
       <header style="height:56px;background:var(--bg-elevated);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:50">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:8px;text-decoration:none">
@@ -95,12 +99,25 @@
       </nav>
     </div>
 
-    <!-- Modale d'incitation à la connexion (globale) -->
+    <CookieConsentBanner />
+
     <AuthPromptModal />
   </div>
 </template>
 
 <script setup lang="ts">
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const useAuth: any;
+declare const useRoute: any;
+declare const useSidebar: any;
+declare const ref: any;
+declare const computed: any;
+declare const watch: any;
+declare const onMounted: any;
+declare const onBeforeUnmount: any;
+declare const navigateTo: any;
+declare const process: any;
+
 const auth = useAuth();
 const route = useRoute();
 const { collapsed, init: initSidebar, toggle: toggleSide } = useSidebar();
@@ -131,11 +148,8 @@ onBeforeUnmount(() => {
   if (process.client) window.removeEventListener("resize", updateMobile);
 });
 
-// Fermer le menu avatar au changement de route
 watch(() => route.path, () => { avatarOpen.value = false; });
 
-// Sur la page d'accueil (hero toujours sombre), on fige la navbar en sombre
-// en redéfinissant localement les variables CSS : les enfants en héritent.
 const landingHeaderVars = computed(() =>
   route.path === "/"
     ? "--bg-elevated:#14171F;--text-primary:#F1F0EC;--text-secondary:#C9CAD1;--text-tertiary:#9C9AA6;--bg-input:rgba(255,255,255,0.08);--border:rgba(255,255,255,0.18);"
@@ -144,7 +158,7 @@ const landingHeaderVars = computed(() =>
 
 type NavItem = { label: string; icon: string; to: string; exact?: boolean };
 
-const navGroups = computed<{ title: string; items: NavItem[] }[]>(() => [
+const navGroups = computed(() => [
   {
     title: "MENU",
     items: [
@@ -164,7 +178,7 @@ const navGroups = computed<{ title: string; items: NavItem[] }[]>(() => [
     title: "GÉNÉRAL",
     items: [{ label: "Profil", icon: "user", to: "/profile" }],
   },
-]);
+] as { title: string; items: NavItem[] }[]);
 
 const isActive = (item: NavItem) =>
   item.exact ? route.path === item.to : route.path.startsWith(item.to);

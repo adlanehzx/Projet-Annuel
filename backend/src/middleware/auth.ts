@@ -32,10 +32,6 @@ export const authMiddleware = (
     res.status(401).json({ error: "Token invalide" });
   }
 };
-
-// Peuple req.userId si un token valide est présent, mais ne bloque jamais
-// la requête - utile pour les routes publiques qui adaptent leur réponse
-// selon que l'appelant est le propriétaire de la ressource ou non.
 export const optionalAuthMiddleware = (
   req: Request,
   _res: Response,
@@ -49,7 +45,6 @@ export const optionalAuthMiddleware = (
       req.userId = (decoded as any).id;
       req.user = decoded;
     } catch {
-      // Token absent ou invalide: on continue sans utilisateur authentifié
     }
   }
 

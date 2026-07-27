@@ -5,9 +5,11 @@ WORKDIR /app
 
 RUN apk add --no-cache openssl
 
+RUN npm install -g npm@11.6.2
+
 COPY backend/package.json backend/package-lock.json* backend/pnpm-lock.yaml* backend/yarn.lock* ./
 
-RUN npm install --frozen-lockfile
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY backend/ .
 

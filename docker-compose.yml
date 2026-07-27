@@ -32,8 +32,46 @@ services:
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - NUXT_PUBLIC_GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - NUXT_PUBLIC_GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost:3000/auth/callback/github}
+      - NUXT_PUBLIC_ANALYTICS_PROVIDER=umami
+      - NUXT_PUBLIC_ANALYTICS_SCRIPT_SRC=${NUXT_PUBLIC_ANALYTICS_SCRIPT_SRC:-http://localhost:3002/script.js}
+      - NUXT_PUBLIC_ANALYTICS_WEBSITE_ID=${NUXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
+      - NUXT_PUBLIC_ANALYTICS_DOMAIN=${NUXT_PUBLIC_ANALYTICS_DOMAIN:-localhost}
     depends_on:
       - backend
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+  umami-db:
+    image: postgres:15-alpine
+    container_name: cinetrack-umami-db
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami}
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: cinetrack-umami
+    ports:
+      - "3002:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-umami}@umami-db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:-change-this-umami-secret}
+    depends_on:
+      umami-db:
+        condition: service_healthy
     networks:
       - cinetrack-network
     restart: unless-stopped
@@ -89,3 +127,4 @@ networks:
 
 volumes:
   postgres_data:
+  umami_db_data:

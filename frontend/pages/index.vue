@@ -29,7 +29,7 @@
           </div>
         </div>
 
-        <div style="flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:30rem;max-width:100%;transform:rotate(-4deg)">
+        <div class="hero-poster-grid" style="flex-shrink:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:30rem;max-width:100%;transform:rotate(-4deg)">
           <div
             v-for="(poster, idx) in topPosters"
             :key="idx"
@@ -61,28 +61,28 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
             <div style="width:48px;height:48px;border-radius:10px;background:transparent;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden">
-              <img src="/assets/images/stats-feature-icon-v2.svg" alt="Statistiques" style="width:48px;height:48px;object-fit:contain" />
+              <img src="/images/stats-feature-icon-v2.svg" alt="Statistiques" style="width:48px;height:48px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Suivez vos progrès</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Gérez votre watchlist avec 5 statuts différents — À voir, En cours, Terminé, Abandonné, En pause.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
             <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/assets/images/4-etoiles.png" alt="Notations et critiques" style="width:48px;height:48px;object-fit:contain" />
+              <img src="/images/4-etoiles.png" alt="Notations et critiques" style="width:48px;height:48px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Notez et critiquez</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Rédigez des critiques détaillées avec une note de 0 à 10 pour chaque série.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
             <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/assets/images/liste-de-controle.png" alt="Listes personnalisées" style="width:48px;height:48px;object-fit:contain" />
+              <img src="/images/liste-de-controle.png" alt="Listes personnalisées" style="width:48px;height:48px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Créez vos listes</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Organisez vos animes en listes personnalisées, publiques ou privées.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
             <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/assets/images/des-medias-sociaux.png" alt="Recommendations" style="width:48px;height:48px;object-fit:contain" />
+              <img src="/images/des-medias-sociaux.png" alt="Recommendations" style="width:48px;height:48px;object-fit:contain" />
             </div>            
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Découvrez des recommandations</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Recevez des suggestions personnalisées selon votre historique.</div>
@@ -157,7 +157,7 @@
     </div>
 
     <div style="background:var(--bg);color:var(--text-primary);padding:64px 24px">
-      <div style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center">
+      <div class="signature-grid" style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center">
         <div style="display:flex;justify-content:center;flex-shrink:0">
           <BrandSeal :size="150" format="svg" style="transform:rotate(8deg)" />
         </div>
@@ -182,6 +182,7 @@
       <BrandSeal :size="22" format="svg" style="flex-shrink:0;transform:rotate(6deg)" />
       <span style="font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text-primary)">AnimeTrack</span>
       <span style="flex:1"></span>
+      <NuxtLink to="/privacy" style="font-family:var(--font-body);font-size:13px;color:var(--text-secondary);text-decoration:none">Politique de confidentialité</NuxtLink>
       <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary)">© 2026 AnimeTrack · Fait pour les otaku qui tiennent leur carnet</span>
     </div>
   </div>
@@ -189,9 +190,13 @@
 
 <script setup lang="ts">
 import { useApi } from "~/composables/useApi";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+import { io } from "socket.io-client";
+const githubLogo = "/images/logo-github.png";
 
 const api = useApi();
-const githubLogo = new URL("../assets/images/logo-github.png", import.meta.url).href;
+const runtimeConfig = useRuntimeConfig();
+let homeSocket: any = null;
 
 const stats = ref({ animes: 0, users: 0, reviews: 0 });
 const topPosters = ref([
@@ -206,6 +211,27 @@ const topPosters = ref([
 onMounted(() => {
   fetchStats();
   fetchTopPosters();
+
+  const token = useState("auth.token", () => "").value;
+  if (!token) return;
+
+  const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+  const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+  homeSocket = io(socketUrl, {
+    transports: ["websocket"],
+    auth: { token },
+  });
+
+  homeSocket.on("stats:global-changed", fetchStats);
+});
+
+onBeforeUnmount(() => {
+  if (homeSocket) {
+    homeSocket.off("stats:global-changed", fetchStats);
+    homeSocket.disconnect();
+    homeSocket = null;
+  }
 });
 
 const fetchStats = async () => {
@@ -232,3 +258,19 @@ const fetchTopPosters = async () => {
   }
 };
 </script>
+
+<style scoped>
+@media (max-width: 768px) {
+  .hero-poster-grid {
+    width: 100% !important;
+    max-width: 320px !important;
+    transform: none !important;
+    margin-inline: auto;
+  }
+
+  .signature-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+</style>
