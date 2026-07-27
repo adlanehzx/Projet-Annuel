@@ -131,6 +131,7 @@ async function main() {
   let imported = 0;
 
   for (let page = 1; page <= PAGES_TO_FETCH; page += 1) {
+    console.log(`Fetching page ${page}/${PAGES_TO_FETCH}...`);
     const payload = await fetchPage(page);
     const results = Array.isArray(payload.data) ? payload.data : [];
 
@@ -139,6 +140,7 @@ async function main() {
       anime.synopsis = await translateToFrench(anime.synopsis);
       await upsertGenresAndAnime(anime);
       imported += 1;
+      console.log(`[${imported}] ${anime.title}`);
     }
 
     if (page < PAGES_TO_FETCH) {
