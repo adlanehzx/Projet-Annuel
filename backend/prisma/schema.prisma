@@ -61,6 +61,8 @@ enum WatchStatus {
   TO_WATCH
   WATCHING
   COMPLETED
+  DROPPED
+  ON_HOLD
 }
 
 // Reviews & Notes
