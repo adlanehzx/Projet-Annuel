@@ -56,6 +56,14 @@ export const getBasicStatistics = async (userId: number) => {
     where: { userId, status: "TO_WATCH" },
   });
 
+  const droppedAnimes = await prisma.watchlist.count({
+    where: { userId, status: "DROPPED" },
+  });
+
+  const onHoldAnimes = await prisma.watchlist.count({
+    where: { userId, status: "ON_HOLD" },
+  });
+
   const reviews = await prisma.review.findMany({
     where: { userId },
     select: { rating: true },
@@ -75,7 +83,14 @@ export const getBasicStatistics = async (userId: number) => {
       completed: completedAnimes,
       watching: watchingAnimes,
       toWatch: toWatchAnimes,
-      total: completedAnimes + watchingAnimes + toWatchAnimes,
+      dropped: droppedAnimes,
+      onHold: onHoldAnimes,
+      total:
+        completedAnimes +
+        watchingAnimes +
+        toWatchAnimes +
+        droppedAnimes +
+        onHoldAnimes,
     },
     reviews: {
       total: reviews.length,
@@ -83,6 +98,39 @@ export const getBasicStatistics = async (userId: number) => {
     },
     collections,
   };
+};
+
+export const getTopGenres = async (userId: number) => {
+  const watchlistItems = await prisma.watchlist.findMany({
+    where: { userId },
+    select: {
+      anime: {
+        select: {
+          genres: {
+            select: {
+              genre: {
+                select: { name: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const counts: Record<string, number> = {};
+
+  watchlistItems.forEach((item) => {
+    item.anime.genres.forEach((animeGenre) => {
+      const name = animeGenre.genre.name;
+      counts[name] = (counts[name] || 0) + 1;
+    });
+  });
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 };
 export const getAdvancedStatistics = async (userId: number) => {
   const watchlist = await prisma.watchlist.findMany({

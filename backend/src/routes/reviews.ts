@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { recalculateAnimeRatingByWatchlistId } from "../services/animeRatings.js";
-import { emitToRoom } from "../realtime/socket.js";
+import { emitToAll, emitToRoom, emitToUser } from "../realtime/socket.js";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -27,6 +27,10 @@ router.post("/", async (req: Request, res: Response) => {
       });
 
       await recalculateAnimeRatingByWatchlistId(existing.watchlistId);
+      emitToUser(userId, "profile:stats-updated", {
+        reason: "review-updated",
+        watchlistId: existing.watchlistId,
+      });
       return res.json(updated);
     }
 
@@ -35,6 +39,12 @@ router.post("/", async (req: Request, res: Response) => {
     });
 
     await recalculateAnimeRatingByWatchlistId(review.watchlistId);
+
+    emitToUser(userId, "profile:stats-updated", {
+      reason: "review-created",
+      watchlistId: review.watchlistId,
+    });
+    emitToAll("stats:global-changed", { reason: "review-created" });
 
     res.status(201).json(review);
   } catch (error) {
@@ -70,6 +80,10 @@ router.put("/:id", async (req: Request, res: Response) => {
     });
 
     await recalculateAnimeRatingByWatchlistId(review.watchlistId);
+    emitToUser(userId, "profile:stats-updated", {
+      reason: "review-updated",
+      watchlistId: review.watchlistId,
+    });
     res.json(updated);
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
@@ -136,6 +150,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
     const deletedWatchlistId = review.watchlistId;
     await prisma.review.delete({ where: { id: parseInt(req.params.id) } });
     await recalculateAnimeRatingByWatchlistId(deletedWatchlistId);
+    emitToUser(userId, "profile:stats-updated", {
+      reason: "review-deleted",
+      watchlistId: deletedWatchlistId,
+    });
+    emitToAll("stats:global-changed", { reason: "review-deleted" });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });

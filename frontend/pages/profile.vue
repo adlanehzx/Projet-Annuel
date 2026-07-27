@@ -64,6 +64,8 @@
 <script setup lang="ts">
 import { useAuth } from "~/composables/useAuth";
 import { useApi } from "~/composables/useApi";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+import { io } from "socket.io-client";
 
 definePageMeta({ middleware: "auth" });
 
@@ -74,19 +76,75 @@ const loading = ref(true);
 const stats = ref({ animeCount: 0, episodeCount: 0, averageRating: 0, reviewCount: 0 });
 const topGenres = ref<any[]>([]);
 const recentReviews = ref<any[]>([]);
+const runtimeConfig = useRuntimeConfig();
+let profileSocket: any = null;
+
+const loadProfileStats = async () => {
+  const [statsRes, genresRes] = await Promise.all([
+    api.get("/statistics/me"),
+    api.get("/statistics/genres"),
+  ]);
+
+  stats.value = {
+    animeCount: statsRes.data?.watchlist?.completed || 0,
+    episodeCount: statsRes.data?.watchlist?.total || 0,
+    averageRating: statsRes.data?.reviews?.averageRating || 0,
+    reviewCount: statsRes.data?.reviews?.total || 0,
+  };
+
+  topGenres.value = Array.isArray(genresRes.data)
+    ? genresRes.data.slice(0, 6)
+    : [];
+};
+
+const loadRecentReviews = async () => {
+  if (!user.value?.username) {
+    recentReviews.value = [];
+    return;
+  }
+
+  const reviewsRes = await api.get(
+    `/profiles/${encodeURIComponent(user.value.username)}/reviews?limit=3`,
+  );
+  recentReviews.value = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+};
+
+const refreshAllProfileData = async () => {
+  try {
+    await Promise.all([loadProfileStats(), loadRecentReviews()]);
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 onMounted(async () => {
   try {
-    const [statsRes, genresRes, reviewsRes] = await Promise.all([
-      api.get("/profile/stats"),
-      api.get("/profile/genres"),
-      api.get("/reviews?limit=3"),
-    ]);
-    stats.value = statsRes.data;
-    topGenres.value = genresRes.data.slice(0, 6);
-    recentReviews.value = reviewsRes.data;
+    await refreshAllProfileData();
+
+    const token = useState("auth.token", () => "").value;
+    if (token) {
+      const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+      const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+      profileSocket = io(socketUrl, {
+        transports: ["websocket"],
+        auth: { token },
+      });
+
+      profileSocket.on("watchlist:changed", refreshAllProfileData);
+      profileSocket.on("profile:stats-updated", refreshAllProfileData);
+    }
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
+});
+
+onBeforeUnmount(() => {
+  if (profileSocket) {
+    profileSocket.off("watchlist:changed", refreshAllProfileData);
+    profileSocket.off("profile:stats-updated", refreshAllProfileData);
+    profileSocket.disconnect();
+    profileSocket = null;
+  }
 });
 
 const joinDate = computed(() => {

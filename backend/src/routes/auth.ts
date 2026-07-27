@@ -10,6 +10,7 @@ import {
 import { verifyGoogleIdToken, exchangeGithubCode } from "../services/oauth.js";
 import { authMiddleware } from "../middleware/auth.js";
 import type { OAuthProfile } from "../services/oauth.js";
+import { emitToAll } from "../realtime/socket.js";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -26,6 +27,8 @@ router.post("/register", async (req: Request, res: Response) => {
         password: hashPassword(password),
       },
     });
+
+    emitToAll("stats:global-changed", { reason: "user-created" });
 
     res.status(201).json({
       id: user.id,

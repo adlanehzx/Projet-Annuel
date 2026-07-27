@@ -163,6 +163,20 @@ router.get("/top", async (_req: Request, res: Response) => {
   }
 });
 
+router.get("/stats", async (_req: Request, res: Response) => {
+  try {
+    const [animes, users, reviews] = await Promise.all([
+      prisma.anime.count(),
+      prisma.user.count(),
+      prisma.review.count(),
+    ]);
+
+    res.json({ animes, users, reviews });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const anime = await prisma.anime.findUnique({

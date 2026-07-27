@@ -23,3 +23,11 @@ export const emitToRoom = (
   if (!io) return;
   io.to(room).emit(event, payload);
 };
+
+export const emitToAll = (
+  event: string,
+  payload: Record<string, unknown>,
+) => {
+  if (!io) return;
+  io.emit(event, payload);
+};

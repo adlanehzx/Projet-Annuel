@@ -190,9 +190,13 @@
 
 <script setup lang="ts">
 import { useApi } from "~/composables/useApi";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+import { io } from "socket.io-client";
 const githubLogo = "/images/logo-github.png";
 
 const api = useApi();
+const runtimeConfig = useRuntimeConfig();
+let homeSocket: any = null;
 
 const stats = ref({ animes: 0, users: 0, reviews: 0 });
 const topPosters = ref([
@@ -207,6 +211,27 @@ const topPosters = ref([
 onMounted(() => {
   fetchStats();
   fetchTopPosters();
+
+  const token = useState("auth.token", () => "").value;
+  if (!token) return;
+
+  const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+  const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+  homeSocket = io(socketUrl, {
+    transports: ["websocket"],
+    auth: { token },
+  });
+
+  homeSocket.on("stats:global-changed", fetchStats);
+});
+
+onBeforeUnmount(() => {
+  if (homeSocket) {
+    homeSocket.off("stats:global-changed", fetchStats);
+    homeSocket.disconnect();
+    homeSocket = null;
+  }
 });
 
 const fetchStats = async () => {
