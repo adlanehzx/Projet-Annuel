@@ -38,6 +38,39 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
+// GET / - mes reviews récentes (paginées)
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+    const reviews = await prisma.review.findMany({
+      where: { userId },
+      include: {
+        watchlist: { include: { anime: { select: { title: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    res.json(
+      reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+        watchlistItem: {
+          anime: { title: r.watchlist.anime?.title ?? r.watchlist.title },
+        },
+      })),
+    );
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // GET reviews d'un film
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
