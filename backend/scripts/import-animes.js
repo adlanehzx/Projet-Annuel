@@ -45,10 +45,17 @@ function cleanSynopsis(text) {
 }
 
 function buildAnimeData(entry) {
+  const studioName =
+    Array.isArray(entry.studios) && entry.studios.length > 0
+      ? entry.studios[0]?.name ?? null
+      : null;
+
   return {
     jikanId: entry.mal_id,
     title: entry.title,
     titleEnglish: entry.title_english ?? null,
+    format: entry.type ?? null,
+    studio: studioName,
     synopsis: cleanSynopsis(entry.synopsis) ?? null,
     imageUrl: entry.images?.jpg?.image_url ?? null,
     score: entry.score ?? null,

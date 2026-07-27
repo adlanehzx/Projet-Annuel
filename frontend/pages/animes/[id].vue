@@ -89,9 +89,17 @@
 </template>
 
 <script setup lang="ts">
-import { useWatchlist } from "~/composables/useWatchlist";
-import { useAnimes } from "~/composables/useAnimes";
-import { useReviews } from "~/composables/useReviews";
+import { useWatchlist } from "../../composables/useWatchlist";
+import { useAnimes } from "../../composables/useAnimes";
+import { useReviews } from "../../composables/useReviews";
+import { useAuth } from "../../composables/useAuth";
+import { useAuthGuard } from "../../composables/useAuthGuard";
+
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const useRoute: () => any;
+declare const ref: any;
+declare const computed: any;
+declare const onMounted: any;
 
 const route = useRoute();
 const animeId = parseInt(route.params.id as string);
@@ -102,14 +110,14 @@ const { getReview, getMovieReviews, createOrUpdateReview } = useReviews();
 const { isAuthenticated } = useAuth();
 const { requireAuth } = useAuthGuard();
 
-const anime = ref<any>(null);
+const anime = ref(null as any);
 const loading = ref(true);
 const statusOpen = ref(false);
 const reviewOpen = ref(false);
 const reviewLoading = ref(false);
 const reviewError = ref("");
 const myReview = ref({ id: null as number | null, rating: 7, comment: "" });
-const communityReviews = ref<any[]>([]);
+const communityReviews = ref([] as any[]);
 
 onMounted(async () => {
   try {

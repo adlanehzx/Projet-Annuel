@@ -144,6 +144,8 @@ model Anime {
   jikanId     Int           @unique @map("jikan_id")
   title       String
   titleEnglish String?      @map("title_english")
+  format      String?
+  studio      String?
   synopsis    String?
   imageUrl    String?       @map("image_url")
   score       Float?
@@ -166,6 +168,9 @@ model Anime {
   @@index([rank])
   @@index([popularity])
   @@index([title])
+  @@index([format])
+  @@index([studio])
+  @@index([airedFrom])
   @@map("animes")
 }
 
