@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { recalculateAnimeRatingByWatchlistId } from "../services/animeRatings.js";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -23,12 +24,16 @@ router.post("/", async (req: Request, res: Response) => {
         where: { id: existing.id },
         data: { rating, comment },
       });
+
+      await recalculateAnimeRatingByWatchlistId(existing.watchlistId);
       return res.json(updated);
     }
 
     const review = await prisma.review.create({
       data: { userId, watchlistId, rating, comment },
     });
+
+    await recalculateAnimeRatingByWatchlistId(review.watchlistId);
 
     res.status(201).json(review);
   } catch (error) {
@@ -79,7 +84,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Accès refusé" });
     }
 
+    const deletedWatchlistId = review.watchlistId;
     await prisma.review.delete({ where: { id: parseInt(req.params.id) } });
+    await recalculateAnimeRatingByWatchlistId(deletedWatchlistId);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
