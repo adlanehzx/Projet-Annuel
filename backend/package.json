@@ -20,6 +20,7 @@
     "google-auth-library": "^9.9.0",
     "jsonwebtoken": "^9.0.0",
     "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0"
   },
   "devDependencies": {

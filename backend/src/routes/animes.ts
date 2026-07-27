@@ -8,24 +8,136 @@ const prisma = new PrismaClient();
 router.get("/", async (req: Request, res: Response) => {
   try {
     const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const genreQuery =
+      typeof req.query.genre === "string" ? req.query.genre.trim() : "";
+    const studioQuery =
+      typeof req.query.studio === "string" ? req.query.studio.trim() : "";
+    const formatQuery =
+      typeof req.query.format === "string" ? req.query.format.trim() : "";
+    const yearQuery =
+      typeof req.query.year === "string" ? req.query.year.trim() : "";
 
-    const animes = await prisma.anime.findMany({
-      where: query
-        ? {
-            OR: [
-              { title: { contains: query, mode: "insensitive" } },
-              { titleEnglish: { contains: query, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
-      include: {
-        genres: { include: { genre: true } },
+    const page = Math.max(1, Number.parseInt(String(req.query.page ?? "1"), 10) || 1);
+    const limit = Math.min(
+      100,
+      Math.max(1, Number.parseInt(String(req.query.limit ?? "40"), 10) || 40),
+    );
+    const skip = (page - 1) * limit;
+
+    const andFilters: any[] = [];
+
+    if (query) {
+      andFilters.push({
+        OR: [
+          { title: { contains: query, mode: "insensitive" } },
+          { titleEnglish: { contains: query, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    if (genreQuery) {
+      const genreTokens = genreQuery
+        .split(",")
+        .map((token) => token.trim())
+        .filter(Boolean);
+
+      const genreIds = genreTokens
+        .map((token) => Number.parseInt(token, 10))
+        .filter((id) => !Number.isNaN(id));
+
+      const genreNames = genreTokens.filter((token) => Number.isNaN(Number.parseInt(token, 10)));
+
+      if (genreIds.length > 0 || genreNames.length > 0) {
+        andFilters.push({
+          OR: [
+            genreIds.length > 0
+              ? {
+                  genres: {
+                    some: {
+                      genreId: { in: genreIds },
+                    },
+                  },
+                }
+              : undefined,
+            genreNames.length > 0
+              ? {
+                  genres: {
+                    some: {
+                      genre: {
+                        name: { in: genreNames, mode: "insensitive" },
+                      },
+                    },
+                  },
+                }
+              : undefined,
+          ].filter(Boolean),
+        });
+      }
+    }
+
+    if (studioQuery) {
+      andFilters.push({
+        studio: {
+          contains: studioQuery,
+          mode: "insensitive",
+        },
+      });
+    }
+
+    if (formatQuery) {
+      andFilters.push({
+        format: {
+          equals: formatQuery,
+          mode: "insensitive",
+        },
+      });
+    }
+
+    if (yearQuery) {
+      const year = Number.parseInt(yearQuery, 10);
+      if (!Number.isNaN(year) && year >= 1900 && year <= 2100) {
+        const yearStart = new Date(Date.UTC(year, 0, 1));
+        const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
+        andFilters.push({
+          airedFrom: {
+            gte: yearStart,
+            lt: yearEnd,
+          },
+        });
+      }
+    }
+
+    const where = andFilters.length > 0 ? { AND: andFilters } : undefined;
+
+    const [animes, total] = await Promise.all([
+      prisma.anime.findMany({
+        where,
+        include: {
+          genres: { include: { genre: true } },
+        },
+        orderBy: [{ score: "desc" }, { popularity: "asc" }],
+        take: limit,
+        skip,
+      }),
+      prisma.anime.count({ where }),
+    ]);
+
+    res.json({
+      data: animes,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      orderBy: [{ score: "desc" }, { popularity: "asc" }],
-      take: 40,
+      filters: {
+        q: query || null,
+        genre: genreQuery || null,
+        year: yearQuery || null,
+        studio: studioQuery || null,
+        format: formatQuery || null,
+      },
     });
-
-    res.json(animes);
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }

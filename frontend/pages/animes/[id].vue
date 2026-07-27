@@ -66,34 +66,25 @@
       <p style="margin-top:26px;max-width:720px;font-size:15px;line-height:1.65;color:var(--text-secondary)">{{ anime.synopsis || 'Synopsis indisponible.' }}</p>
 
       <Transition name="at-fade">
-        <div v-if="reviewOpen" style="margin-top:28px;max-width:760px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:20px">
-          <h3 style="font-family:var(--font-display);font-weight:700;font-size:18px;margin:0 0 14px;color:var(--text-primary)">{{ myReview.id ? 'Mon avis' : 'Écrire un avis' }}</h3>
-          <div style="margin-bottom:14px">
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
-              <input v-model.number="myReview.rating" type="range" min="0" max="10" step="0.5" style="flex:1;accent-color:var(--color-accent-primary)" />
-              <span style="font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--color-accent-primary);width:40px;text-align:right">{{ myReview.rating }}</span>
-            </div>
-          </div>
-          <textarea v-model="myReview.comment" placeholder="Qu'en as-tu pensé ?" style="width:100%;height:100px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--font-body);font-size:14px;color:var(--text-primary);resize:none;outline:none;box-sizing:border-box"></textarea>
-          <div style="display:flex;gap:10px;margin-top:12px">
-            <button @click="saveReview" :disabled="reviewLoading" style="padding:10px 20px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer">{{ reviewLoading ? 'Enregistrement…' : (myReview.id ? 'Mettre à jour' : 'Publier') }}</button>
-            <button @click="reviewOpen = false" style="padding:10px 16px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:14px;cursor:pointer">Annuler</button>
-          </div>
-        </div>
+        <ReviewForm
+          v-if="reviewOpen"
+          :model-value="myReview"
+          :loading="reviewLoading"
+          :error-message="reviewError"
+          @submit="saveReview"
+          @cancel="reviewOpen = false"
+        />
       </Transition>
 
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:36px 0 14px;color:var(--text-primary)">Reviews ({{ communityReviews.length }})</h2>
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
-        <div v-for="review in communityReviews" :key="review.id" style="display:flex;gap:12px;padding:16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-display);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ (review.user?.username || '?').slice(0,2).toUpperCase() }}</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <span style="font-weight:500;font-size:14px;color:var(--text-primary)">{{ review.user?.username || 'Anonyme' }}</span>
-              <span style="font-family:var(--font-mono);font-size:13px;color:var(--color-accent-primary)">★ {{ review.rating }}/10</span>
-            </div>
-            <div style="margin-top:6px;font-size:14px;line-height:1.55;color:var(--text-secondary)">{{ review.comment || 'Aucun commentaire.' }}</div>
-          </div>
-        </div>
+        <ReviewCard
+          v-for="review in communityReviews"
+          :key="review.id"
+          :review="review"
+          :loading-like="likeLoadingReviewId === review.id"
+          @toggle-like="toggleLike"
+        />
         <div v-if="communityReviews.length === 0" style="padding:28px;border:1px dashed var(--border);border-radius:10px;text-align:center;color:var(--text-secondary);font-size:14px">
           Aucune review pour l'instant.
           <button v-if="!reviewOpen" @click="requireAuth(() => reviewOpen = true)" style="margin-top:12px;display:block;margin-inline:auto;padding:8px 16px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer">Écrire la première review</button>
@@ -104,26 +95,52 @@
 </template>
 
 <script setup lang="ts">
-import { useWatchlist } from "~/composables/useWatchlist";
-import { useAnimes } from "~/composables/useAnimes";
-import { useReviews } from "~/composables/useReviews";
+import { useWatchlist } from "../../composables/useWatchlist";
+import { useAnimes } from "../../composables/useAnimes";
+import { useReviews } from "../../composables/useReviews";
+import { useAuth } from "../../composables/useAuth";
+import { useAuthGuard } from "../../composables/useAuthGuard";
+import { io } from "socket.io-client";
+
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const useRoute: () => any;
+declare const useRuntimeConfig: any;
+declare const useState: any;
+declare const ref: any;
+declare const computed: any;
+declare const onMounted: any;
+declare const onBeforeUnmount: any;
 
 const route = useRoute();
 const animeId = parseInt(route.params.id as string);
 
 const { getAnimeDetails } = useAnimes();
 const { fetchWatchlist, getWatchlistItem, addToWatchlist, updateStatus, removeFromWatchlist: removeWatchlistItem } = useWatchlist();
-const { getReview, getMovieReviews, createOrUpdateReview } = useReviews();
+const { getReview, getMovieReviews, createOrUpdateReview, likeReview, unlikeReview } = useReviews();
 const { isAuthenticated } = useAuth();
 const { requireAuth } = useAuthGuard();
+const runtimeConfig = useRuntimeConfig();
 
-const anime = ref<any>(null);
+const anime = ref(null as any);
 const loading = ref(true);
 const statusOpen = ref(false);
 const reviewOpen = ref(false);
 const reviewLoading = ref(false);
-const myReview = ref({ id: null as any, rating: 7, comment: "" });
-const communityReviews = ref<any[]>([]);
+const reviewError = ref("");
+const myReview = ref({ id: null as number | null, rating: 7, comment: "" });
+const communityReviews = ref([] as any[]);
+const likeLoadingReviewId = ref(null as number | null);
+
+let animeSocket: any = null;
+
+const handleLikeUpdated = (payload: { reviewId: number; likesCount: number }) => {
+  const idx = communityReviews.value.findIndex((r: any) => r.id === payload.reviewId);
+  if (idx === -1) return;
+  communityReviews.value[idx] = {
+    ...communityReviews.value[idx],
+    likesCount: payload.likesCount,
+  };
+};
 
 onMounted(async () => {
   try {
@@ -135,8 +152,34 @@ onMounted(async () => {
       if (rev) myReview.value = rev;
       communityReviews.value = await getMovieReviews(wi.id);
     }
+
+    const token = useState("auth.token", () => "").value;
+    if (token) {
+      const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+      const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+      animeSocket = io(socketUrl, {
+        transports: ["websocket"],
+        auth: { token },
+      });
+
+      animeSocket.on("connect", () => {
+        animeSocket.emit("subscribe:anime", animeId);
+      });
+
+      animeSocket.on("review:like-updated", handleLikeUpdated);
+    }
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
+});
+
+onBeforeUnmount(() => {
+  if (animeSocket) {
+    animeSocket.emit("unsubscribe:anime", animeId);
+    animeSocket.off("review:like-updated", handleLikeUpdated);
+    animeSocket.disconnect();
+    animeSocket = null;
+  }
 });
 
 const watchlistItem = computed(() => getWatchlistItem.value(animeId));
@@ -188,15 +231,56 @@ const removeFromWatchlist = async () => {
   catch (e) { console.error(e); }
 };
 
-const saveReview = async () => {
+const saveReview = async (payload: {
+  id: number | null;
+  rating: number;
+  comment: string;
+}) => {
   if (!watchlistItem.value) return;
   try {
+    reviewError.value = "";
     reviewLoading.value = true;
-    await createOrUpdateReview(watchlistItem.value.id, myReview.value.rating, myReview.value.comment);
+    await createOrUpdateReview(
+      watchlistItem.value.id,
+      payload.rating,
+      payload.comment,
+      payload.id || undefined,
+    );
+    myReview.value = {
+      ...myReview.value,
+      ...payload,
+    };
     communityReviews.value = await getMovieReviews(watchlistItem.value.id);
     reviewOpen.value = false;
-  } catch (e) { console.error(e); }
+  } catch (e: any) {
+    reviewError.value = e.response?.data?.error || e.message || "Erreur lors de l'enregistrement";
+    console.error(e);
+  }
   finally { reviewLoading.value = false; }
+};
+
+const toggleLike = async (review: { id: number; likedByMe?: boolean }) => {
+  await requireAuth(async () => {
+    try {
+      likeLoadingReviewId.value = review.id;
+      const result = review.likedByMe
+        ? await unlikeReview(review.id)
+        : await likeReview(review.id);
+
+      const idx = communityReviews.value.findIndex((r: any) => r.id === review.id);
+      if (idx === -1) return;
+
+      communityReviews.value[idx] = {
+        ...communityReviews.value[idx],
+        likesCount: result.likesCount,
+        likedByMe: result.likedByMe,
+      };
+    } catch (e) {
+      console.error(e);
+    } finally {
+      likeLoadingReviewId.value = null;
+    }
+  });
 };
 </script>
 

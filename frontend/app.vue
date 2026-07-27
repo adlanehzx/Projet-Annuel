@@ -2,7 +2,7 @@
   <div :class="isDark ? 'dark' : ''" style="min-height:100vh;background:var(--bg);color:var(--text-primary);font-family:var(--font-body)">
 
     <template v-if="!auth.isAuthenticated.value">
-      <header :style="landingHeaderVars" style="background:var(--bg-elevated);color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;height:64px;position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)">
+      <header v-if="!isMobile" :style="landingHeaderVars" style="background:var(--bg-elevated);color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;height:64px;position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border)">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:10px;text-decoration:none">
           <BrandSeal :size="30" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
           <span style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">AnimeTrack</span>
@@ -12,6 +12,16 @@
         <NuxtLink to="/auth/login" style="font-family:var(--font-body);font-size:14px;font-weight:500;color:var(--text-primary);text-decoration:none;padding:8px 6px;white-space:nowrap">Connexion</NuxtLink>
         <NuxtLink to="/auth/register" style="padding:9px 18px;background:var(--color-accent-primary);color:#FFFFFF;border-radius:8px;font-family:var(--font-body);font-weight:500;font-size:14px;text-decoration:none;white-space:nowrap">Commencer</NuxtLink>
         <button @click="toggleDark" aria-label="Basculer thème" style="width:36px;height:36px;border-radius:999px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:15px;cursor:pointer;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center">{{ isDark ? '☀️' : '🌙' }}</button>
+      </header>
+      <header v-else :style="landingHeaderVars" style="height:56px;background:var(--bg-elevated);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 12px;position:sticky;top:0;z-index:50">
+        <NuxtLink to="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
+          <BrandSeal :size="24" format="svg" style="flex-shrink:0;transform:rotate(6deg)" loading="eager" />
+          <span style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)">AnimeTrack</span>
+        </NuxtLink>
+        <span style="flex:1"></span>
+        <NuxtLink to="/animes" style="font-family:var(--font-body);font-size:13px;color:var(--text-secondary);text-decoration:none;padding:6px 4px;white-space:nowrap">Catalogue</NuxtLink>
+        <NuxtLink to="/auth/login" style="font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--text-primary);text-decoration:none;padding:7px 8px;white-space:nowrap">Connexion</NuxtLink>
+        <button @click="toggleDark" aria-label="Basculer thème" style="width:32px;height:32px;border-radius:999px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">{{ isDark ? '☀️' : '🌙' }}</button>
       </header>
       <NuxtPage />
     </template>

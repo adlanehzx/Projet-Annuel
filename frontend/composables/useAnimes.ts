@@ -6,7 +6,15 @@ export const useAnimes = () => {
   const searchAnimes = async (query: string) => {
     try {
       const response = await api.get(`/animes?q=${encodeURIComponent(query)}`);
-      return response.data || [];
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      return [];
     } catch (error: any) {
       console.error("Erreur recherche animes:", error);
       return [];
