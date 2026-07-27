@@ -40,6 +40,41 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+router.put("/:id", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const reviewId = parseInt(req.params.id);
+    const { rating, comment } = req.body;
+
+    if (Number.isNaN(reviewId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    if (rating < 0 || rating > 10) {
+      return res.status(400).json({ error: "La note doit être entre 0 et 10" });
+    }
+
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+
+    if (!review || review.userId !== userId) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const updated = await prisma.review.update({
+      where: { id: reviewId },
+      data: { rating, comment },
+    });
+
+    await recalculateAnimeRatingByWatchlistId(review.watchlistId);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
     const reviews = await prisma.review.findMany({

@@ -30,14 +30,20 @@ export const useReviews = () => {
     watchlistId: number,
     rating: number,
     comment: string,
+    reviewId?: number,
   ) => {
     try {
       loading.value = true;
-      const response = await api.post("/reviews", {
+      const payload = {
         watchlistId,
         rating,
         comment,
-      });
+      };
+
+      const response = reviewId
+        ? await api.put(`/reviews/${reviewId}`, payload)
+        : await api.post("/reviews", payload);
+
       return response.data;
     } catch (e: any) {
       error.value =
