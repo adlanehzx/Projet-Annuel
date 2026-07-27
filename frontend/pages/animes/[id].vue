@@ -187,12 +187,24 @@ const saveReview = async (payload: {
   rating: number;
   comment: string;
 }) => {
-  if (!watchlistItem.value) return;
   try {
     reviewError.value = "";
     reviewLoading.value = true;
+
+    // Une review est liée à une entrée watchlist: on crée l'entrée au besoin.
+    let targetWatchlistItem = watchlistItem.value;
+    if (!targetWatchlistItem) {
+      await addToWatchlist(animeId);
+      await fetchWatchlist();
+      targetWatchlistItem = watchlistItem.value;
+    }
+
+    if (!targetWatchlistItem) {
+      throw new Error("Impossible de créer l'entrée watchlist pour publier la review");
+    }
+
     await createOrUpdateReview(
-      watchlistItem.value.id,
+      targetWatchlistItem.id,
       payload.rating,
       payload.comment,
       payload.id || undefined,
@@ -201,7 +213,7 @@ const saveReview = async (payload: {
       ...myReview.value,
       ...payload,
     };
-    communityReviews.value = await getMovieReviews(watchlistItem.value.id);
+    communityReviews.value = await getMovieReviews(targetWatchlistItem.id);
     reviewOpen.value = false;
   } catch (e: any) {
     reviewError.value = e.response?.data?.error || e.message || "Erreur lors de l'enregistrement";
