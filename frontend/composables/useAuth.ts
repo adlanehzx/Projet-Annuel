@@ -53,6 +53,7 @@ export const useAuth = () => {
     email: string,
     password: string,
     totpToken?: string,
+    backupCode?: string,
   ) => {
     isLoading.value = true;
     error.value = "";
@@ -61,6 +62,7 @@ export const useAuth = () => {
         email,
         password,
         totpToken,
+        backupCode,
       });
       applySession(response.data);
       return response.data;
@@ -108,7 +110,10 @@ export const useAuth = () => {
 
   const get2FAStatus = async () => {
     const response = await get("/auth/2fa/status");
-    return response.data.totpEnabled as boolean;
+    return response.data as {
+      totpEnabled: boolean;
+      backupCodesRemaining: number;
+    };
   };
 
   const setup2FA = async () => {
@@ -118,12 +123,19 @@ export const useAuth = () => {
 
   const enable2FA = async (secret: string, totpToken: string) => {
     const response = await post("/auth/2fa/enable", { secret, totpToken });
-    return response.data;
+    return response.data as { message: string; backupCodes: string[] };
   };
 
   const disable2FA = async (password: string) => {
     const response = await post("/auth/2fa/disable", { password });
     return response.data;
+  };
+
+  const regenerateBackupCodes = async (password: string) => {
+    const response = await post("/auth/2fa/backup-codes/regenerate", {
+      password,
+    });
+    return response.data as { backupCodes: string[] };
   };
 
   const logout = () => {
@@ -152,5 +164,6 @@ export const useAuth = () => {
     setup2FA,
     enable2FA,
     disable2FA,
+    regenerateBackupCodes,
   };
 };

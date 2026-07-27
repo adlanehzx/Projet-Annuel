@@ -22,6 +22,7 @@ model User {
   // 2FA
   totpSecret String?
   totpEnabled Boolean @default(false)
+  totpBackupCodes String[] @default([])
   
   // OAuth
   googleId String? @unique

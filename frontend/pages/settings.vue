@@ -20,12 +20,48 @@
 
       <p v-if="loadingStatus" style="font-size:13px;color:var(--text-secondary)">Chargement...</p>
 
+      <!-- Codes de secours à sauvegarder (affichés une seule fois) -->
+      <div
+        v-if="backupCodesToShow"
+        style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding:16px;border:1px solid var(--color-accent-primary);border-radius:10px"
+      >
+        <p style="font-size:13px;color:var(--text-primary);margin:0">
+          <strong>Sauvegardez ces codes de secours maintenant</strong> — ils ne seront plus jamais réaffichés. Chacun ne peut être utilisé qu'une seule fois pour vous connecter si vous perdez l'accès à votre application d'authentification.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--font-mono);font-size:14px;color:var(--text-primary)">
+          <span v-for="code in backupCodesToShow" :key="code">{{ code }}</span>
+        </div>
+        <button class="at-btn-primary" style="max-width:160px" @click="backupCodesToShow = null">
+          J'ai sauvegardé mes codes
+        </button>
+      </div>
+
       <template v-else>
         <!-- 2FA déjà activée -->
         <div v-if="twoFactorEnabled && !setupState" style="display:flex;flex-direction:column;gap:14px">
           <p style="font-size:14px;color:var(--text-secondary)">
             La 2FA est actuellement <strong style="color:#2ea043">activée</strong>.
+            ({{ backupCodesRemaining }} code{{ backupCodesRemaining === 1 ? "" : "s" }} de secours restant{{ backupCodesRemaining === 1 ? "" : "s" }})
           </p>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input
+              v-model="regeneratePassword"
+              type="password"
+              placeholder="Mot de passe pour régénérer les codes"
+              class="at-input"
+              style="max-width:280px"
+            />
+            <button
+              class="at-btn-secondary"
+              style="max-width:260px"
+              :disabled="!regeneratePassword || actionLoading"
+              @click="handleRegenerate"
+            >
+              Régénérer les codes de secours
+            </button>
+          </div>
+
           <input
             v-model="disablePassword"
             type="password"
@@ -100,14 +136,18 @@
 <script setup lang="ts">
 definePageMeta({ middleware: "auth" });
 
-const { get2FAStatus, setup2FA, enable2FA, disable2FA } = useAuth();
+const { get2FAStatus, setup2FA, enable2FA, disable2FA, regenerateBackupCodes } =
+  useAuth();
 
 const loadingStatus = ref(true);
 const actionLoading = ref(false);
 const twoFactorEnabled = ref(false);
+const backupCodesRemaining = ref(0);
+const backupCodesToShow = ref<string[] | null>(null);
 const setupState = ref<{ secret: string; qrCode: string } | null>(null);
 const enableToken = ref("");
 const disablePassword = ref("");
+const regeneratePassword = ref("");
 const feedback = ref("");
 const feedbackIsError = ref(false);
 
@@ -119,7 +159,9 @@ const showFeedback = (message: string, isError = false) => {
 const refreshStatus = async () => {
   loadingStatus.value = true;
   try {
-    twoFactorEnabled.value = await get2FAStatus();
+    const status = await get2FAStatus();
+    twoFactorEnabled.value = status.totpEnabled;
+    backupCodesRemaining.value = status.backupCodesRemaining;
   } catch {
     showFeedback("Impossible de récupérer le statut 2FA", true);
   } finally {
@@ -147,13 +189,32 @@ const handleConfirmEnable = async () => {
   actionLoading.value = true;
   feedback.value = "";
   try {
-    await enable2FA(setupState.value.secret, enableToken.value);
+    const result = await enable2FA(setupState.value.secret, enableToken.value);
     setupState.value = null;
     enableToken.value = "";
     twoFactorEnabled.value = true;
-    showFeedback("2FA activée avec succès");
+    backupCodesRemaining.value = result.backupCodes.length;
+    backupCodesToShow.value = result.backupCodes;
   } catch (err: any) {
     showFeedback(err.response?.data?.error || "Code invalide", true);
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const handleRegenerate = async () => {
+  actionLoading.value = true;
+  feedback.value = "";
+  try {
+    const result = await regenerateBackupCodes(regeneratePassword.value);
+    regeneratePassword.value = "";
+    backupCodesRemaining.value = result.backupCodes.length;
+    backupCodesToShow.value = result.backupCodes;
+  } catch (err: any) {
+    showFeedback(
+      err.response?.data?.error || "Mot de passe invalide",
+      true,
+    );
   } finally {
     actionLoading.value = false;
   }
@@ -166,6 +227,7 @@ const handleDisable = async () => {
     await disable2FA(disablePassword.value);
     disablePassword.value = "";
     twoFactorEnabled.value = false;
+    backupCodesRemaining.value = 0;
     showFeedback("2FA désactivée");
   } catch (err: any) {
     showFeedback(
