@@ -6,6 +6,9 @@ import {
   generateJWT,
   hashPassword,
   comparePassword,
+  generateBackupCodes,
+  hashBackupCode,
+  findBackupCodeIndex,
 } from "../services/auth.js";
 import { verifyGoogleIdToken, exchangeGithubCode } from "../services/oauth.js";
 import { authMiddleware } from "../middleware/auth.js";
@@ -43,21 +46,35 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 router.post("/login", async (req: Request, res: Response) => {
   try {
-    const { email, password, totpToken } = req.body;
+    const { email, password, totpToken, backupCode } = req.body;
     if (!email || !password)
       return res.status(400).json({ error: "Identifiants requis" });
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password || !comparePassword(password, user.password))
       return res.status(401).json({ error: "Identifiants invalides" });
+
+    // Si 2FA activé, vérifier le token TOTP ou un code de secours
     if (user.totpEnabled) {
-      if (!totpToken)
+      if (backupCode) {
+        const idx = findBackupCodeIndex(user.totpBackupCodes, backupCode);
+        if (idx === -1)
+          return res.status(401).json({ error: "Code de secours invalide" });
+
+        // Code à usage unique : on le retire immédiatement
+        const remaining = [...user.totpBackupCodes];
+        remaining.splice(idx, 1);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { totpBackupCodes: remaining },
+        });
+      } else if (!totpToken) {
         return res
           .status(401)
           .json({ error: "2FA requis", requiresTwoFactor: true });
-
-      if (!user.totpSecret || !verifyTOTPToken(user.totpSecret, totpToken))
+      } else if (!user.totpSecret || !verifyTOTPToken(user.totpSecret, totpToken)) {
         return res.status(401).json({ error: "Token 2FA invalide" });
+      }
     }
 
     const token = generateJWT(user.id, user.email);
@@ -105,15 +122,23 @@ router.post(
         return res.status(400).json({ error: "Données manquantes" });
       if (!verifyTOTPToken(secret, totpToken))
         return res.status(400).json({ error: "Token invalide" });
+
+      // Activer 2FA + générer les codes de secours (affichés une seule fois)
+      const backupCodes = generateBackupCodes();
+
       await prisma.user.update({
         where: { id: userId },
         data: {
           totpSecret: secret,
           totpEnabled: true,
+          totpBackupCodes: backupCodes.map(hashBackupCode),
         },
       });
 
-      res.json({ message: "2FA activé avec succès" });
+      res.json({
+        message: "2FA activé avec succès",
+        backupCodes,
+      });
     } catch (error) {
       res.status(500).json({ error: "Erreur serveur" });
     }
@@ -143,6 +168,7 @@ router.post(
         data: {
           totpSecret: null,
           totpEnabled: false,
+          totpBackupCodes: [],
         },
       });
 
@@ -161,10 +187,48 @@ router.get(
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { totpEnabled: true },
+        select: { totpEnabled: true, totpBackupCodes: true },
       });
 
-      res.json({ totpEnabled: user?.totpEnabled ?? false });
+      res.json({
+        totpEnabled: user?.totpEnabled ?? false,
+        backupCodesRemaining: user?.totpBackupCodes?.length ?? 0,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+);
+
+// POST /api/auth/2fa/backup-codes/regenerate - Régénérer les codes de secours
+router.post(
+  "/2fa/backup-codes/regenerate",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { password } = req.body;
+
+      if (!password)
+        return res.status(400).json({ error: "Données manquantes" });
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user || !user.totpEnabled)
+        return res.status(400).json({ error: "2FA non activée" });
+
+      if (
+        !user.password ||
+        !comparePassword(password, user.password)
+      )
+        return res.status(401).json({ error: "Mot de passe invalide" });
+
+      const backupCodes = generateBackupCodes();
+      await prisma.user.update({
+        where: { id: userId },
+        data: { totpBackupCodes: backupCodes.map(hashBackupCode) },
+      });
+
+      res.json({ backupCodes });
     } catch (error) {
       res.status(500).json({ error: "Erreur serveur" });
     }

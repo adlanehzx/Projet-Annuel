@@ -13,6 +13,7 @@ import listRoutes from "./routes/lists.js";
 import animeRoutes from "./routes/animes.js";
 import recommendationRoutes from "./routes/recommendations.js";
 import profileRoutes from "./routes/profiles.js";
+import myProfileRoutes from "./routes/profile.js";
 import statisticsRoutes from "./routes/statistics.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { authMiddleware, optionalAuthMiddleware } from "./middleware/auth.js";
@@ -82,6 +83,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes publiques
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", optionalAuthMiddleware, profileRoutes);
+app.use("/api/profile", authMiddleware, myProfileRoutes);
 app.use("/api/animes", animeRoutes);
 
 // Routes protégées
