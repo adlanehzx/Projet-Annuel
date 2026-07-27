@@ -41,6 +41,7 @@ model Watchlist {
   animeId Int @map("anime_id")
   title String
   posterPath String?
+  progress Int @default(0)
   status WatchStatus @default(TO_WATCH) // TO_WATCH, WATCHING, COMPLETED
   userId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

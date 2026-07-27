@@ -114,6 +114,64 @@ router.put("/:id/status", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+router.put("/:id/progress", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+
+    const watchlistId = parseInt(req.params.id);
+    const progress = Number(req.body?.progress);
+
+    if (Number.isNaN(watchlistId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    if (!Number.isInteger(progress) || progress < 0) {
+      return res
+        .status(400)
+        .json({ error: "La progression doit être un entier positif" });
+    }
+
+    const item = await prisma.watchlist.findUnique({
+      where: { id: watchlistId },
+      include: { anime: { select: { episodes: true } } },
+    });
+
+    if (!item || item.userId !== userId) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const totalEpisodes = item.anime?.episodes;
+    const boundedProgress =
+      typeof totalEpisodes === "number" && totalEpisodes > 0
+        ? Math.min(progress, totalEpisodes)
+        : progress;
+
+    let nextStatus = item.status;
+    if (typeof totalEpisodes === "number" && totalEpisodes > 0) {
+      if (boundedProgress >= totalEpisodes) {
+        nextStatus = "COMPLETED";
+      } else if (boundedProgress > 0 && item.status === "TO_WATCH") {
+        nextStatus = "WATCHING";
+      }
+    }
+
+    const updated = await prisma.watchlist.update({
+      where: { id: watchlistId },
+      data: {
+        progress: boundedProgress,
+        status: nextStatus,
+      },
+      include: { anime: true, reviews: true, inCollections: true },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
