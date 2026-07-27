@@ -1,237 +1,347 @@
 <template>
-  <div class="min-h-screen bg-slate-900 text-white p-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold">Ma Watchlist</h1>
-        <NuxtLink
-          to="/movies/search"
-          class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
-        >
-          + Ajouter un film
-        </NuxtLink>
-      </div>
+  <div class="watchlist-page" style="max-width:1180px;margin:0 auto;padding:24px 24px 40px;width:100%">
+    <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">
+      Ma Watchlist
+    </h1>
 
-      <!-- Tabs -->
-      <div class="flex gap-4 mb-8 border-b border-slate-700">
-        <button
-          v-for="status in ['TO_WATCH', 'WATCHING', 'COMPLETED']"
-          :key="status"
-          @click="activeStatus = status"
-          :class="[
-            'px-6 py-3 font-semibold transition border-b-2',
-            activeStatus === status
-              ? 'border-amber-500 text-amber-500'
-              : 'border-transparent text-slate-400 hover:text-white',
-          ]"
-        >
-          {{ statusLabel(status) }}
-        </button>
-      </div>
+    <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-slate-400">Chargement...</p>
+    <div
+      v-else-if="watchlist.length === 0"
+      style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center"
+    >
+      <BrandSeal :size="72" format="svg" style="opacity:0.25" />
+      <div style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">Aucun anime ici</div>
+      <div style="font-size:14px;color:var(--text-secondary);max-width:380px">
+        Ajoutez des animes depuis le catalogue pour suivre votre progression.
       </div>
-
-      <!-- Error -->
-      <div
-        v-if="error"
-        class="bg-red-900 border border-red-700 text-red-100 p-4 rounded mb-6"
+      <NuxtLink
+        to="/animes"
+        style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none"
       >
-        {{ error }}
-      </div>
-
-      <!-- Movies Grid -->
-      <div
-        v-if="!loading && filteredWatchlist.length > 0"
-        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-      >
-        <div
-          v-for="item in filteredWatchlist"
-          :key="item.id"
-          class="group cursor-pointer"
-          @click="selectedItem = item"
-        >
-          <div
-            class="relative overflow-hidden rounded-lg mb-4 bg-slate-800 aspect-[2/3]"
-          >
-            <img
-              v-if="item.posterPath"
-              :src="`https://image.tmdb.org/t/p/w342${item.posterPath}`"
-              :alt="item.title"
-              class="w-full h-full object-cover group-hover:scale-105 transition"
-            />
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center text-slate-500"
-            >
-              Pas d'affiche
-            </div>
-
-            <!-- Status badge -->
-            <div
-              class="absolute top-2 right-2 bg-amber-500 text-slate-900 px-3 py-1 rounded text-xs font-bold"
-            >
-              {{ statusLabel(item.status) }}
-            </div>
-          </div>
-          <h3
-            class="font-semibold truncate group-hover:text-amber-500 transition"
-          >
-            {{ item.title }}
-          </h3>
-          <p class="text-sm text-slate-400">TMDB ID: {{ item.tmdbId }}</p>
-        </div>
-      </div>
-
-      <!-- Empty state -->
-      <div v-else-if="!loading" class="text-center py-12">
-        <p class="text-slate-400 text-lg mb-4">
-          Aucun film pour cette catégorie
-        </p>
-        <NuxtLink
-          to="/movies/search"
-          class="inline-block bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
-        >
-          Découvrir des films
-        </NuxtLink>
-      </div>
+        Parcourir le catalogue
+      </NuxtLink>
     </div>
 
-    <!-- Detail Modal -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div
-          v-if="selectedItem"
-          class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
-        >
+    <div v-else class="watchlist-layout" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start">
+      <section style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)">
+            Classement personnel
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">
+            {{ watchlist.length }} anime(s)
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
           <div
-            class="bg-slate-800 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto relative"
+            v-for="(item, index) in watchlist"
+            :key="item.id"
+            draggable="true"
+            @dragstart="onDragStart(item.id)"
+            @dragover.prevent="onDragOverItem(item.id)"
+            @drop.prevent="onDropOnItem(item.id)"
+            @dragend="onDragEnd"
+            @click="selectedItemId = item.id"
+            role="button"
+            tabindex="0"
+            @keydown.enter="selectedItemId = item.id"
+            :style="`display:flex;gap:10px;padding:10px;border-radius:10px;border:1px solid ${selectedItemId === item.id ? 'var(--color-accent-primary)' : dragOverItemId === item.id ? 'var(--color-accent-secondary)' : 'var(--border)'};background:${selectedItemId === item.id ? 'rgba(214,67,43,0.08)' : 'var(--bg-input)'};cursor:grab;transition:border-color .12s ease`"
           >
-            <button
-              @click="selectedItem = null"
-              class="absolute top-4 right-4 text-slate-400 hover:text-white"
-            >
-              ✕
-            </button>
+            <div style="width:22px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-tertiary);font-family:var(--font-mono);font-size:11px;line-height:1">
+              <span>#{{ Number(index) + 1 }}</span>
+              <span style="letter-spacing:1px">⋮⋮</span>
+            </div>
 
-            <div class="flex gap-6 p-6">
-              <img
-                v-if="selectedItem.posterPath"
-                :src="`https://image.tmdb.org/t/p/w342${selectedItem.posterPath}`"
-                :alt="selectedItem.title"
-                class="w-32 h-48 rounded object-cover flex-shrink-0"
-              />
+            <div style="position:relative;width:54px;flex-shrink:0;aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--bg-elevated)">
+              <img v-if="item.posterPath" :src="item.posterPath" :alt="item.title" style="width:100%;height:100%;object-fit:cover" />
+              <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">🎌</div>
+            </div>
 
-              <div class="flex-1">
-                <h2 class="text-2xl font-bold mb-4">
-                  {{ selectedItem.title }}
-                </h2>
-
-                <div class="space-y-3 mb-6">
-                  <div>
-                    <p class="text-slate-400 text-sm">Statut actuel</p>
-                    <select
-                      :value="selectedItem.status"
-                      @change="updateStatus($event.target.value)"
-                      class="mt-1 bg-slate-700 text-white px-3 py-2 rounded w-full"
-                    >
-                      <option value="TO_WATCH">À voir</option>
-                      <option value="WATCHING">En cours</option>
-                      <option value="COMPLETED">Terminé</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="flex gap-3">
-                  <NuxtLink
-                    :to="`/movies/${selectedItem.tmdbId}`"
-                    class="flex-1 bg-amber-500 hover:bg-amber-600 text-center px-4 py-2 rounded font-semibold transition"
-                  >
-                    Détail & Avis
-                  </NuxtLink>
-                  <button
-                    @click="removeFromWatchlist(selectedItem.id)"
-                    class="px-4 py-2 rounded bg-red-600 hover:bg-red-700 font-semibold transition"
-                  >
-                    Supprimer
-                  </button>
-                </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                {{ item.title }}
+              </div>
+              <div style="margin-top:5px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">
+                {{ statusLabel(item.status) }} · {{ progressLabel(item) }} · {{ progressPercent(item) }}%
+              </div>
+              <div style="margin-top:6px;height:6px;background:var(--border);border-radius:999px;overflow:hidden">
+                <div :style="`height:100%;width:${progressPercent(item)}%;background:var(--color-accent-primary);border-radius:999px`"></div>
               </div>
             </div>
           </div>
         </div>
-      </Transition>
-    </Teleport>
+      </section>
+
+      <aside style="position:sticky;top:74px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <template v-if="selectedItem">
+          <img
+            v-if="selectedItem.posterPath"
+            :src="selectedItem.posterPath"
+            :alt="selectedItem.title"
+            style="width:100%;max-height:210px;object-fit:cover;border-radius:9px;border:1px solid var(--border)"
+          />
+          <h2 style="font-family:var(--font-display);font-weight:700;font-size:18px;margin:12px 0 8px;color:var(--text-primary)">
+            {{ selectedItem.title }}
+          </h2>
+
+          <label style="display:block;margin-bottom:12px">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Statut</div>
+            <select
+              :value="selectedItem.status"
+              @change="updateStatus(($event.target as HTMLSelectElement).value)"
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:14px"
+            >
+              <option value="TO_WATCH">À voir</option>
+              <option value="WATCHING">En cours</option>
+              <option value="COMPLETED">Terminé</option>
+              <option value="DROPPED">Abandonné</option>
+              <option value="ON_HOLD">En pause</option>
+            </select>
+          </label>
+
+          <label style="display:block;margin-bottom:4px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px;color:var(--text-secondary)">Progression</span>
+              <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary)">
+                {{ progressDraft }}/{{ totalEpisodes(selectedItem) || "?" }} · {{ progressPercentFromValue(progressDraft, selectedItem) }}%
+              </span>
+            </div>
+            <input
+              v-model.number="progressDraft"
+              type="range"
+              :min="0"
+              :max="Math.max(1, totalEpisodes(selectedItem) || Math.max(progressDraft, 1))"
+              step="1"
+              style="width:100%;accent-color:var(--color-accent-primary)"
+            />
+          </label>
+
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button
+              @click="saveProgress"
+              style="flex:1;padding:10px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer"
+            >
+              Enregistrer progression
+            </button>
+            <button
+              @click="removeItem(selectedItem.id)"
+              style="padding:10px 12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer"
+            >
+              Retirer
+            </button>
+          </div>
+
+          <NuxtLink
+            :to="`/animes/${selectedItem.animeId}`"
+            style="display:block;text-align:center;padding:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;font-size:13px;text-decoration:none"
+          >
+            Ouvrir la fiche anime
+          </NuxtLink>
+        </template>
+
+        <div v-else style="padding:18px 8px;text-align:center;color:var(--text-secondary);font-size:13px">
+          Sélectionne un anime de la liste pour afficher le détail.
+        </div>
+      </aside>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useWatchlist } from "~/composables/useWatchlist";
-import { useRouter } from "vue-router";
+import { useWatchlist } from "../composables/useWatchlist";
+// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+import { io } from "socket.io-client";
 
-const router = useRouter();
+// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
+declare const definePageMeta: any;
+declare const useRuntimeConfig: any;
+declare const useState: any;
+declare const onMounted: any;
+declare const onBeforeUnmount: any;
+declare const ref: any;
+declare const computed: any;
+declare const watch: any;
+
+definePageMeta({ middleware: "auth" });
+
 const {
   watchlist,
   loading,
-  error,
   fetchWatchlist,
   updateStatus: updateWatchlistStatus,
-  removeFromWatchlist: removeItemFromWatchlist,
+  updateProgress,
+  removeFromWatchlist,
+  reorderWatchlist,
 } = useWatchlist();
-const activeStatus = ref("TO_WATCH");
-const selectedItem = ref(null);
 
-onMounted(() => {
-  fetchWatchlist();
+const selectedItemId = ref(null as number | null);
+const draggedItemId = ref(null as number | null);
+const dragOverItemId = ref(null as number | null);
+const progressDraft = ref(0);
+const runtimeConfig = useRuntimeConfig();
+
+let watchlistSocket: any = null;
+
+onMounted(async () => {
+  await fetchWatchlist();
+  if (!selectedItemId.value && watchlist.value.length > 0) {
+    selectedItemId.value = watchlist.value[0].id;
+  }
+
+  const token = useState("auth.token", () => "").value;
+  if (!token) return;
+
+  const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+  const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
+  watchlistSocket = io(socketUrl, {
+    transports: ["websocket"],
+    auth: { token },
+  });
+
+  watchlistSocket.on("watchlist:changed", async () => {
+    await fetchWatchlist();
+  });
 });
 
-const filteredWatchlist = computed(() => {
-  return watchlist.value.filter(
-    (item: any) => item.status === activeStatus.value,
-  );
+onBeforeUnmount(() => {
+  if (watchlistSocket) {
+    watchlistSocket.disconnect();
+    watchlistSocket = null;
+  }
 });
 
-const statusLabel = (status: string) => {
+const selectedItem = computed(() =>
+  watchlist.value.find((item: any) => item.id === selectedItemId.value) || null,
+);
+
+watch(
+  () => selectedItem.value,
+  (item: any) => {
+    progressDraft.value = Number(item?.progress || 0);
+  },
+  { immediate: true },
+);
+
+const statusLabel = (s: string) => {
   const labels: Record<string, string> = {
     TO_WATCH: "À voir",
     WATCHING: "En cours",
     COMPLETED: "Terminé",
+    DROPPED: "Abandonné",
+    ON_HOLD: "En pause",
   };
-  return labels[status] || status;
+  return labels[s] || s;
 };
 
-const updateStatus = async (newStatus: string) => {
-  if (selectedItem.value) {
-    try {
-      await updateWatchlistStatus(selectedItem.value.id, newStatus);
-      selectedItem.value = null;
-      await fetchWatchlist();
-    } catch (e) {
-      console.error("Erreur:", e);
-    }
+const totalEpisodes = (item: any) => Number(item?.anime?.episodes || 0);
+
+const progressPercentFromValue = (progress: number, item: any) => {
+  const total = totalEpisodes(item);
+  if (total <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((progress / total) * 100)));
+};
+
+const progressPercent = (item: any) =>
+  progressPercentFromValue(Number(item?.progress || 0), item);
+
+const progressLabel = (item: any) => {
+  const current = Number(item?.progress || 0);
+  const total = totalEpisodes(item);
+  if (total > 0) return `${current}/${total} épisodes`;
+  return `${current} épisode(s)`;
+};
+
+const onDragStart = (itemId: number) => {
+  draggedItemId.value = itemId;
+};
+
+const onDragOverItem = (itemId: number) => {
+  if (draggedItemId.value === itemId) return;
+  dragOverItemId.value = itemId;
+};
+
+const onDragEnd = () => {
+  draggedItemId.value = null;
+  dragOverItemId.value = null;
+};
+
+const onDropOnItem = async (targetId: number) => {
+  if (!draggedItemId.value || draggedItemId.value === targetId) {
+    onDragEnd();
+    return;
+  }
+
+  const sourceIndex = watchlist.value.findIndex((item: any) => item.id === draggedItemId.value);
+  const targetIndex = watchlist.value.findIndex((item: any) => item.id === targetId);
+
+  if (sourceIndex < 0 || targetIndex < 0) {
+    onDragEnd();
+    return;
+  }
+
+  const snapshot = [...watchlist.value];
+  const reordered = [...watchlist.value];
+  const [moved] = reordered.splice(sourceIndex, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  watchlist.value = reordered;
+
+  try {
+    await reorderWatchlist(reordered.map((item: any) => item.id));
+  } catch (e) {
+    watchlist.value = snapshot;
+    await fetchWatchlist();
+    console.error(e);
+  } finally {
+    onDragEnd();
   }
 };
 
-const removeFromWatchlist = async (id: number) => {
+const updateStatus = async (newStatus: string) => {
+  if (!selectedItem.value) return;
   try {
-    await removeItemFromWatchlist(id);
-    selectedItem.value = null;
+    await updateWatchlistStatus(selectedItem.value.id, newStatus);
+    await fetchWatchlist();
   } catch (e) {
-    console.error("Erreur:", e);
+    console.error(e);
+  }
+};
+
+const saveProgress = async () => {
+  if (!selectedItem.value) return;
+  try {
+    await updateProgress(selectedItem.value.id, Number(progressDraft.value || 0));
+    await fetchWatchlist();
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+const removeItem = async (id: number) => {
+  try {
+    await removeFromWatchlist(id);
+    if (selectedItemId.value === id) {
+      selectedItemId.value = watchlist.value[0]?.id ?? null;
+    }
+  } catch (e) {
+    console.error(e);
   }
 };
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
+@media (max-width: 980px) {
+  .watchlist-page {
+    padding: 16px 14px 30px !important;
+  }
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+@media (max-width: 980px) {
+  .watchlist-layout {
+    grid-template-columns: 1fr !important;
+  }
 }
 </style>

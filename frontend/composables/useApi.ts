@@ -10,7 +10,6 @@ export const useApi = () => {
     },
   });
 
-  // Ajouter le token JWT aux headers
   api.interceptors.request.use((config) => {
     const token = useState("auth.token", () => "").value;
     if (token) {
@@ -19,7 +18,6 @@ export const useApi = () => {
     return config;
   });
 
-  // Gérer les erreurs 401
   api.interceptors.response.use(
     (response) => response,
     (error) => {

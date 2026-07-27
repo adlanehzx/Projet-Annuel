@@ -7,6 +7,15 @@ export default defineNuxtConfig({
     apiBase: process.env.NUXT_API_BASE || "http://backend:3001/api",
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:3001/api",
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+      githubClientId: process.env.NUXT_PUBLIC_GITHUB_CLIENT_ID || "",
+      githubRedirectUri:
+        process.env.NUXT_PUBLIC_GITHUB_REDIRECT_URI ||
+        "http://localhost:3000/auth/callback/github",
+      analyticsProvider: process.env.NUXT_PUBLIC_ANALYTICS_PROVIDER || "",
+      analyticsScriptSrc: process.env.NUXT_PUBLIC_ANALYTICS_SCRIPT_SRC || "",
+      analyticsWebsiteId: process.env.NUXT_PUBLIC_ANALYTICS_WEBSITE_ID || "",
+      analyticsDomain: process.env.NUXT_PUBLIC_ANALYTICS_DOMAIN || "",
     },
   },
 
@@ -22,14 +31,16 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "CineTrack - Suivi Cinématographique",
+      title: "AnimeTrack",
+      link: [
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
+        { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" },
+      ],
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        {
-          name: "description",
-          content: "Application de suivi cinématographique - Style Letterboxd",
-        },
+        { name: "description", content: "AnimeTrack — Suivez et découvrez des animes" },
       ],
     },
   },

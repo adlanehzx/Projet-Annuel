@@ -4,7 +4,6 @@ export const useAuth = () => {
   const isLoading = useState("auth.loading", () => false);
   const error = useState("auth.error", () => "");
 
-  // Charger depuis localStorage au démarrage
   if (process.client) {
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -29,7 +28,6 @@ export const useAuth = () => {
         username,
         password,
       });
-      // Auto login après register
       return await login(email, password);
     } catch (err: any) {
       error.value = err.response?.data?.error || "Erreur lors de l'inscription";
@@ -39,19 +37,32 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const applySession = (data: { token: string; user: any }) => {
+    token.value = data.token;
+    user.value = data.user;
+
+    if (process.client) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+  };
+
+  const login = async (
+    email: string,
+    password: string,
+    totpToken?: string,
+    backupCode?: string,
+  ) => {
     isLoading.value = true;
     error.value = "";
     try {
-      const response = await post("/auth/login", { email, password });
-      token.value = response.data.token;
-      user.value = response.data.user;
-
-      if (process.client) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-      }
-
+      const response = await post("/auth/login", {
+        email,
+        password,
+        totpToken,
+        backupCode,
+      });
+      applySession(response.data);
       return response.data;
     } catch (err: any) {
       error.value = err.response?.data?.error || "Erreur de connexion";
@@ -59,6 +70,68 @@ export const useAuth = () => {
     } finally {
       isLoading.value = false;
     }
+  };
+
+  const loginWithGoogle = async (idToken: string) => {
+    isLoading.value = true;
+    error.value = "";
+    try {
+      const response = await post("/auth/oauth/google", { idToken });
+      applySession(response.data);
+      return response.data;
+    } catch (err: any) {
+      error.value =
+        err.response?.data?.error || "Erreur de connexion avec Google";
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loginWithGithub = async (code: string) => {
+    isLoading.value = true;
+    error.value = "";
+    try {
+      const response = await post("/auth/oauth/github", { code });
+      applySession(response.data);
+      return response.data;
+    } catch (err: any) {
+      error.value =
+        err.response?.data?.error || "Erreur de connexion avec GitHub";
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const get2FAStatus = async () => {
+    const response = await get("/auth/2fa/status");
+    return response.data as {
+      totpEnabled: boolean;
+      backupCodesRemaining: number;
+    };
+  };
+
+  const setup2FA = async () => {
+    const response = await post("/auth/2fa/setup", {});
+    return response.data as { secret: string; qrCode: string };
+  };
+
+  const enable2FA = async (secret: string, totpToken: string) => {
+    const response = await post("/auth/2fa/enable", { secret, totpToken });
+    return response.data as { message: string; backupCodes: string[] };
+  };
+
+  const disable2FA = async (password: string) => {
+    const response = await post("/auth/2fa/disable", { password });
+    return response.data;
+  };
+
+  const regenerateBackupCodes = async (password: string) => {
+    const response = await post("/auth/2fa/backup-codes/regenerate", {
+      password,
+    });
+    return response.data as { backupCodes: string[] };
   };
 
   const logout = () => {
@@ -80,6 +153,13 @@ export const useAuth = () => {
     isAuthenticated,
     register,
     login,
+    loginWithGoogle,
+    loginWithGithub,
     logout,
+    get2FAStatus,
+    setup2FA,
+    enable2FA,
+    disable2FA,
+    regenerateBackupCodes,
   };
 };

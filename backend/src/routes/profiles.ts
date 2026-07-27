@@ -3,8 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// GET /api/profiles/:username - Récupérer le profil public d'un utilisateur
 router.get("/:username", async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
@@ -22,14 +20,10 @@ router.get("/:username", async (req: Request, res: Response) => {
     });
 
     if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
-
-    // Si le profil n'est pas public et l'utilisateur n'est pas le propriétaire
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!user.isPublic && user.id !== userId) {
       return res.status(403).json({ error: "Ce profil n'est pas public" });
     }
-
-    // Récupérer les collections publiques
     const publicCollections = await prisma.collection.findMany({
       where: {
         userId: user.id,
@@ -40,17 +34,16 @@ router.get("/:username", async (req: Request, res: Response) => {
           include: {
             watchlist: {
               select: {
-                tmdbId: true,
+                animeId: true,
                 title: true,
                 posterPath: true,
+                anime: true,
               },
             },
           },
         },
       },
     });
-
-    // Statistiques publiques
     const completedCount = await prisma.watchlist.count({
       where: {
         userId: user.id,
@@ -85,8 +78,6 @@ router.get("/:username", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET /api/profiles/:username/reviews - Récupérer les reviews publiques d'un utilisateur
 router.get("/:username/reviews", async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
@@ -99,9 +90,7 @@ router.get("/:username/reviews", async (req: Request, res: Response) => {
     });
 
     if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
-
-    // Vérifier que le profil est public
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!user.isPublic && user.id !== userId) {
       return res.status(403).json({ error: "Ce profil n'est pas public" });
     }
@@ -111,9 +100,10 @@ router.get("/:username/reviews", async (req: Request, res: Response) => {
       include: {
         watchlist: {
           select: {
-            tmdbId: true,
+            animeId: true,
             title: true,
             posterPath: true,
+            anime: true,
           },
         },
       },

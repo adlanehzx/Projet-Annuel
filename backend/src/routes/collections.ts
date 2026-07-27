@@ -3,8 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = Router();
-
-// GET mes collections
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -23,8 +21,6 @@ router.get("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// GET détail d'une collection
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const collection = await prisma.collection.findUnique({
@@ -40,8 +36,6 @@ router.get("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// POST créer une collection
 router.post("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -65,8 +59,6 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// PUT mettre à jour une collection
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -90,8 +82,6 @@ router.put("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// POST ajouter un film à une collection
 router.post("/:collectionId/items", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -124,8 +114,6 @@ router.post("/:collectionId/items", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-// DELETE supprimer un film d'une collection
 router.delete(
   "/:collectionId/items/:itemId",
   async (req: Request, res: Response) => {
@@ -150,8 +138,6 @@ router.delete(
     }
   },
 );
-
-// DELETE supprimer une collection
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

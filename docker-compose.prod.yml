@@ -1,0 +1,98 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: cinetrack-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD manquant dans .env}
+      POSTGRES_DB: cinetrack
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: cinetrack-libretranslate
+    environment:
+      - LT_LOAD_ONLY=en,fr
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/languages >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: cinetrack-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:?DB_PASSWORD manquant dans .env}@db:5432/cinetrack
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET manquant dans .env}
+      - FRONTEND_URL=https://hankotrack.com
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_REDIRECT_URI=https://hankotrack.com/auth/callback/github
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: cinetrack-frontend
+    environment:
+      - NUXT_PUBLIC_API_BASE=https://hankotrack.com/api
+      - NUXT_API_BASE=http://backend:3001/api
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - NUXT_PUBLIC_GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - NUXT_PUBLIC_GITHUB_REDIRECT_URI=https://hankotrack.com/auth/callback/github
+    depends_on:
+      - backend
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: cinetrack-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - cinetrack-network
+    restart: unless-stopped
+
+networks:
+  cinetrack-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

@@ -1,31 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+:root {
+  --bg: #E6DAD2;
+  --bg-elevated: #EFE9E3;
+  --bg-input: #FFFFFF;
+  --text-primary: #1A1B1E;
+  --text-secondary: #6B6D76;
+  --text-tertiary: #A3A5AE;
+  --border: #C9CAD1;
+  --color-accent-primary: #D6432B;
+  --color-accent-primary-hover: #C53620;
+  --color-accent-secondary: #35408C;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
+
+.dark {
+  --bg: #14171F;
+  --bg-elevated: #1E212D;
+  --bg-input: #26293D;
+  --text-primary: #F1F0EC;
+  --text-secondary: #B8B7B0;
+  --text-tertiary: #7F7D74;
+  --border: #3C3F4D;
+}
+
+html { scroll-behavior: smooth; }
 
 body {
-  @apply bg-slate-950 text-slate-100;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
 }
 
-.card {
-  @apply bg-slate-800 rounded-lg overflow-hidden border border-slate-700 hover:border-primary transition;
+.at-surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition;
+.at-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
 }
+.at-input:focus { border-color: var(--color-accent-primary); }
+.at-input::placeholder { color: var(--text-tertiary); }
 
-.btn-primary {
-  @apply bg-primary text-white hover:bg-teal-600;
+.at-btn-primary {
+  background: var(--color-accent-primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.at-btn-primary:hover { background: var(--color-accent-primary-hover); }
 
-.btn-secondary {
-  @apply bg-slate-700 text-white hover:bg-slate-600;
+.at-btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
 }
+.at-btn-secondary:hover { border-color: var(--text-tertiary); }
 
-.input {
-  @apply w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-primary;
+.at-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+.at-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+
+.card { @apply at-card; }
+.btn { @apply at-btn-primary; }
+.btn-primary { background: var(--color-accent-primary) !important; }
+.btn-secondary { background: var(--bg-input) !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
+.input { @apply at-input; }

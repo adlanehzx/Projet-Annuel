@@ -22,54 +22,50 @@ model User {
   // 2FA
   totpSecret String?
   totpEnabled Boolean @default(false)
+  totpBackupCodes String[] @default([])
   
   // OAuth
   googleId String? @unique
   githubId String? @unique
-  oauthProviders OAuthProvider[]
-  
+
   watchlist Watchlist[]
   reviews Review[]
+  reviewLikes ReviewLike[]
   collections Collection[]
   lists List[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model OAuthProvider {
-  id    Int     @id @default(autoincrement())
-  provider String // "google", "github"
-  providerUserId String
-  userId Int
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  
-  @@unique([provider, userId])
-  @@index([userId])
-}
-
 // Watchlist avec status
 model Watchlist {
   id    Int     @id @default(autoincrement())
-  tmdbId Int @unique
+  animeId Int @map("anime_id")
   title String
   posterPath String?
+  position Int @default(0)
+  progress Int @default(0)
   status WatchStatus @default(TO_WATCH) // TO_WATCH, WATCHING, COMPLETED
   userId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
   reviews Review[]
   inCollections CollectionItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, tmdbId])
+  @@unique([userId, animeId])
   @@index([userId])
+  @@index([animeId])
+  @@index([userId, position])
 }
 
 enum WatchStatus {
   TO_WATCH
   WATCHING
   COMPLETED
+  DROPPED
+  ON_HOLD
 }
 
 // Reviews & Notes
@@ -81,12 +77,26 @@ model Review {
   watchlistId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  likes ReviewLike[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, watchlistId])
   @@index([userId])
   @@index([watchlistId])
+}
+
+model ReviewLike {
+  id Int @id @default(autoincrement())
+  userId Int
+  reviewId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+  @@index([userId])
 }
 
 // Collections personnalisées (listes thématiques)
@@ -140,10 +150,72 @@ model ListAnime {
   animeId  Int   @map("anime_id")
   position Int
   list     List  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  anime    Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
 
   @@unique([listId, animeId])
   @@index([listId])
   @@index([animeId])
   @@index([listId, position])
   @@map("list_animes")
+}
+
+model Anime {
+  id          Int           @id @default(autoincrement())
+  jikanId     Int           @unique @map("jikan_id")
+  title       String
+  titleEnglish String?      @map("title_english")
+  format      String?
+  studio      String?
+  synopsis    String?
+  imageUrl    String?       @map("image_url")
+  score       Float?
+  communityRating Float?    @map("community_rating")
+  communityReviewCount Int  @default(0) @map("community_review_count")
+  rank        Int?
+  popularity  Int?
+  episodes    Int?
+  status      String?
+  airedFrom   DateTime?     @map("aired_from")
+  airedTo     DateTime?     @map("aired_to")
+  url         String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  genres      AnimeGenre[]
+  listItems   ListAnime[]
+  watchlistItems Watchlist[]
+
+  @@index([score])
+  @@index([rank])
+  @@index([popularity])
+  @@index([title])
+  @@index([format])
+  @@index([studio])
+  @@index([airedFrom])
+  @@map("animes")
+}
+
+model Genre {
+  id        Int          @id @default(autoincrement())
+  jikanId   Int          @unique @map("jikan_id")
+  name      String
+  slug      String?
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  animes    AnimeGenre[]
+
+  @@index([name])
+  @@map("genres")
+}
+
+model AnimeGenre {
+  id       Int   @id @default(autoincrement())
+  animeId  Int   @map("anime_id")
+  genreId  Int   @map("genre_id")
+  anime    Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  genre    Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([animeId, genreId])
+  @@index([animeId])
+  @@index([genreId])
+  @@map("anime_genres")
 }

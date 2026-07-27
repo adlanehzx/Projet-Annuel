@@ -30,14 +30,20 @@ export const useReviews = () => {
     watchlistId: number,
     rating: number,
     comment: string,
+    reviewId?: number,
   ) => {
     try {
       loading.value = true;
-      const response = await api.post("/reviews", {
+      const payload = {
         watchlistId,
         rating,
         comment,
-      });
+      };
+
+      const response = reviewId
+        ? await api.put(`/reviews/${reviewId}`, payload)
+        : await api.post("/reviews", payload);
+
       return response.data;
     } catch (e: any) {
       error.value =
@@ -57,6 +63,26 @@ export const useReviews = () => {
     }
   };
 
+  const likeReview = async (id: number) => {
+    try {
+      const response = await api.post(`/reviews/${id}/like`, {});
+      return response.data;
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Erreur lors du like";
+      throw e;
+    }
+  };
+
+  const unlikeReview = async (id: number) => {
+    try {
+      const response = await api.del(`/reviews/${id}/like`);
+      return response.data;
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Erreur lors du unlike";
+      throw e;
+    }
+  };
+
   return {
     loading,
     error,
@@ -64,5 +90,7 @@ export const useReviews = () => {
     getMovieReviews,
     createOrUpdateReview,
     deleteReview,
+    likeReview,
+    unlikeReview,
   };
 };

@@ -1,0 +1,9 @@
+hankotrack.com, www.hankotrack.com {
+	handle /api/* {
+		reverse_proxy backend:3001
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
