@@ -2,6 +2,7 @@ import { ref } from "vue";
 import { useApi } from "./useApi";
 
 export const useReviews = () => {
+  const MIN_COMMENT_LENGTH = 50;
   const api = useApi();
   const loading = ref(false);
   const error = ref("");
@@ -30,18 +31,32 @@ export const useReviews = () => {
     watchlistId: number,
     rating: number,
     comment: string,
+    reviewId?: number,
   ) => {
     try {
       loading.value = true;
-      const response = await api.post("/reviews", {
+      const trimmedComment = comment.trim();
+
+      if (trimmedComment.length < MIN_COMMENT_LENGTH) {
+        throw new Error(
+          `Le commentaire doit contenir au moins ${MIN_COMMENT_LENGTH} caractères`,
+        );
+      }
+
+      const payload = {
         watchlistId,
         rating,
-        comment,
-      });
+        comment: trimmedComment,
+      };
+
+      const response = reviewId
+        ? await api.put(`/reviews/${reviewId}`, payload)
+        : await api.post("/reviews", payload);
+
       return response.data;
     } catch (e: any) {
       error.value =
-        e.response?.data?.error || "Erreur lors de l'enregistrement";
+        e.response?.data?.error || e.message || "Erreur lors de l'enregistrement";
       throw e;
     } finally {
       loading.value = false;

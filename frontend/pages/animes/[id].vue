@@ -192,7 +192,12 @@ const saveReview = async () => {
   if (!watchlistItem.value) return;
   try {
     reviewLoading.value = true;
-    await createOrUpdateReview(watchlistItem.value.id, myReview.value.rating, myReview.value.comment);
+    await createOrUpdateReview(
+      watchlistItem.value.id,
+      myReview.value.rating,
+      myReview.value.comment,
+      myReview.value.id || undefined,
+    );
     communityReviews.value = await getMovieReviews(watchlistItem.value.id);
     reviewOpen.value = false;
   } catch (e) { console.error(e); }
