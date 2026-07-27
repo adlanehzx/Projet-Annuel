@@ -126,8 +126,22 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+
+    // Chaque utilisateur a sa propre entrée Watchlist pour un même anime :
+    // on résout l'animeId depuis l'entrée fournie, puis on récupère les
+    // reviews de TOUS les utilisateurs sur cet anime (pas seulement celles
+    // liées à cette entrée précise, propre à un seul utilisateur).
+    const watchlistEntry = await prisma.watchlist.findUnique({
+      where: { id: parseInt(req.params.watchlistId) },
+      select: { animeId: true },
+    });
+
+    if (!watchlistEntry) {
+      return res.json([]);
+    }
+
     const reviews = await prisma.review.findMany({
-      where: { watchlistId: parseInt(req.params.watchlistId) },
+      where: { watchlist: { animeId: watchlistEntry.animeId } },
       include: {
         user: { select: { username: true } },
         likes: userId ? { where: { userId }, select: { id: true } } : false,
