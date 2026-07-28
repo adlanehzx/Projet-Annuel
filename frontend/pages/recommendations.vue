@@ -6,28 +6,25 @@
     <div v-if="loading" style="text-align:center;padding:64px;color:var(--text-secondary)">Chargement…</div>
 
     <div v-else-if="recommendations.length === 0" style="text-align:center;padding:64px;color:var(--text-secondary)">
-      Revenez bientôt ! Ajoutez plus d'animes à votre watchlist pour des recommandations personnalisées.
+      Revenez bientôt ! Notez au moins un anime 7/10 ou plus pour débloquer des recommandations personnalisées basées sur vos goûts.
     </div>
 
     <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px">
       <div
         v-for="item in recommendations"
-        :key="item.anime.id"
+        :key="item.id"
         role="button"
         tabindex="0"
-        @click="navigateTo(`/animes/${item.anime.id}`)"
-        @keydown.enter="navigateTo(`/animes/${item.anime.id}`)"
+        @click="navigateTo(`/animes/${item.id}`)"
+        @keydown.enter="navigateTo(`/animes/${item.id}`)"
         style="cursor:pointer;border-radius:8px"
       >
         <div style="position:relative;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--bg-elevated);border:1px solid var(--border)">
-          <img v-if="item.anime.imageUrl" :src="item.anime.imageUrl" :alt="item.anime.title" style="width:100%;height:100%;object-fit:cover;transition:opacity 0.2s" />
+          <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.title" style="width:100%;height:100%;object-fit:cover;transition:opacity 0.2s" />
           <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px">🎌</div>
-          <div style="position:absolute;top:8px;right:8px;background:var(--color-accent-primary);color:#fff;padding:4px 10px;border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;opacity:0.95">
-            {{ (item.score * 100).toFixed(0) }}%
-          </div>
         </div>
-        <div style="margin-top:8px;font-size:14px;font-weight:500;line-height:1.3;color:var(--text-primary)">{{ item.anime.title }}</div>
-        <div style="margin-top:3px;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">★ {{ item.anime.score?.toFixed(1) ?? '—' }}</div>
+        <div style="margin-top:8px;font-size:14px;font-weight:500;line-height:1.3;color:var(--text-primary)">{{ item.title }}</div>
+        <div style="margin-top:3px;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">★ {{ item.score?.toFixed(1) ?? '—' }}</div>
       </div>
     </div>
   </div>
