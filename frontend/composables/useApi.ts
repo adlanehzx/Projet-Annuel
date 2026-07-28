@@ -38,11 +38,16 @@ export const useApi = () => {
   const post = (url: string, data: any) => api.post(url, data);
   const put = (url: string, data: any) => api.put(url, data);
   const del = (url: string) => api.delete(url);
+  // Le navigateur fixe lui-même le Content-Type multipart avec sa boundary
+  // dès que le body est une instance FormData (comportement XHR/fetch natif).
+  const postForm = (url: string, formData: FormData) =>
+    api.post(url, formData, { headers: { "Content-Type": "multipart/form-data" } });
 
   return {
     get,
     post,
     put,
     del,
+    postForm,
   };
 };
