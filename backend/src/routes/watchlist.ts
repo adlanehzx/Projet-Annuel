@@ -167,15 +167,32 @@ router.put("/:id/status", async (req: Request, res: Response) => {
 
     const item = await prisma.watchlist.findUnique({
       where: { id: parseInt(req.params.id) },
+      include: { anime: { select: { episodes: true } } },
     });
 
     if (!item || item.userId !== userId) {
       return res.status(403).json({ error: "Accès refusé" });
     }
 
+    // Aligne automatiquement la progression sur le nouveau statut, quand le
+    // nombre total d'épisodes de l'anime est connu.
+    const totalEpisodes = item.anime?.episodes;
+    const data: { status: any; progress?: number } = { status };
+
+    if (typeof totalEpisodes === "number" && totalEpisodes > 0) {
+      if (status === "TO_WATCH") {
+        data.progress = 0;
+      } else if (status === "COMPLETED") {
+        data.progress = totalEpisodes;
+      } else if (status === "WATCHING") {
+        data.progress = Math.round(totalEpisodes / 2);
+      }
+    }
+
     const updated = await prisma.watchlist.update({
       where: { id: parseInt(req.params.id) },
-      data: { status },
+      data,
+      include: { anime: true, reviews: true, inCollections: true },
     });
 
     emitToUser(userId, "watchlist:changed", {

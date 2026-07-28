@@ -13,7 +13,7 @@ export const useAuth = () => {
     }
   }
 
-  const { get, post } = useApi();
+  const { get, post, put } = useApi();
 
   const register = async (
     email: string,
@@ -134,6 +134,16 @@ export const useAuth = () => {
     return response.data as { backupCodes: string[] };
   };
 
+  const getMyProfile = async () => {
+    const response = await get("/auth/profile");
+    return response.data as { isPublic: boolean; [key: string]: any };
+  };
+
+  const updateMyProfile = async (data: { isPublic?: boolean }) => {
+    const response = await put("/auth/profile", data);
+    return response.data;
+  };
+
   const logout = () => {
     token.value = "";
     user.value = null;
@@ -161,5 +171,7 @@ export const useAuth = () => {
     enable2FA,
     disable2FA,
     regenerateBackupCodes,
+    getMyProfile,
+    updateMyProfile,
   };
 };

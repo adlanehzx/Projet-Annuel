@@ -2,6 +2,34 @@
   <div style="max-width:640px;margin:0 auto;padding:24px 24px 48px;width:100%">
     <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;margin:0 0 20px;color:var(--text-primary)">Paramètres</h1>
 
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Confidentialité</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">
+        Un profil public permet aux autres utilisateurs de voir tes statistiques, tes listes publiques et tes reviews via ton profil.
+      </p>
+
+      <div
+        v-if="privacyFeedback"
+        style="margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px;background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.3);color:#2ea043"
+      >
+        {{ privacyFeedback }}
+      </div>
+
+      <p v-if="loadingPrivacy" style="font-size:13px;color:var(--text-secondary)">Chargement...</p>
+      <label v-else style="display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content">
+        <input
+          type="checkbox"
+          :checked="isProfilePublic"
+          :disabled="privacyLoading"
+          @change="handleTogglePrivacy"
+        />
+        <span style="font-size:14px;color:var(--text-primary)">
+          Rendre mon profil public
+          (<strong :style="isProfilePublic ? 'color:#2ea043' : 'color:var(--color-accent-primary)'">{{ isProfilePublic ? "activé" : "désactivé" }}</strong>)
+        </span>
+      </label>
+    </div>
+
     <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px">
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Authentification à deux facteurs</h2>
       <p style="font-size:13px;color:var(--text-secondary);margin:0 0 20px">
@@ -133,8 +161,49 @@
 <script setup lang="ts">
 definePageMeta({ middleware: "auth" });
 
-const { get2FAStatus, setup2FA, enable2FA, disable2FA, regenerateBackupCodes } =
-  useAuth();
+const {
+  get2FAStatus,
+  setup2FA,
+  enable2FA,
+  disable2FA,
+  regenerateBackupCodes,
+  getMyProfile,
+  updateMyProfile,
+} = useAuth();
+
+const loadingPrivacy = ref(true);
+const privacyLoading = ref(false);
+const isProfilePublic = ref(false);
+const privacyFeedback = ref("");
+
+const refreshPrivacy = async () => {
+  loadingPrivacy.value = true;
+  try {
+    const profile = await getMyProfile();
+    isProfilePublic.value = !!profile.isPublic;
+  } catch {
+    // silencieux : le statut 2FA plus bas remontera déjà une erreur si l'API est down
+  } finally {
+    loadingPrivacy.value = false;
+  }
+};
+
+const handleTogglePrivacy = async (event: Event) => {
+  const next = (event.target as HTMLInputElement).checked;
+  privacyLoading.value = true;
+  privacyFeedback.value = "";
+  try {
+    await updateMyProfile({ isPublic: next });
+    isProfilePublic.value = next;
+    privacyFeedback.value = next
+      ? "Ton profil est maintenant public."
+      : "Ton profil est maintenant privé.";
+  } catch {
+    // revert visuel : le v-model n'a pas changé puisqu'on utilise :checked, rien à faire
+  } finally {
+    privacyLoading.value = false;
+  }
+};
 
 const loadingStatus = ref(true);
 const actionLoading = ref(false);
@@ -236,5 +305,8 @@ const handleDisable = async () => {
   }
 };
 
-onMounted(refreshStatus);
+onMounted(() => {
+  refreshStatus();
+  refreshPrivacy();
+});
 </script>
