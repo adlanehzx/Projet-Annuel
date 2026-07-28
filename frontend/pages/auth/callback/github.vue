@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-const { loginWithGithub, error: authError } = useAuth();
+const { loginWithGithub, oauthTwoFactorPending, error: authError } = useAuth();
 const route = useRoute();
 const error = ref("");
 
@@ -25,7 +25,12 @@ onMounted(async () => {
   }
 
   try {
-    await loginWithGithub(code);
+    const result = await loginWithGithub(code);
+    if (result?.requiresTwoFactor) {
+      oauthTwoFactorPending.value = result.pendingToken;
+      await navigateTo("/auth/login");
+      return;
+    }
     window.location.href = "/animes";
   } catch (err) {
     error.value = authError.value || "Erreur de connexion avec GitHub";

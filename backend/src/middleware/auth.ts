@@ -23,8 +23,11 @@ export const authMiddleware = (
       return res.status(401).json({ error: "Token requis" });
     }
 
-    const decoded = jwt.verify(token, env.jwtSecret);
-    req.userId = (decoded as any).id;
+    const decoded = jwt.verify(token, env.jwtSecret) as any;
+    if (decoded.purpose === "2fa_pending") {
+      return res.status(401).json({ error: "Authentification incomplète (2FA requise)" });
+    }
+    req.userId = decoded.id;
     req.user = decoded;
 
     next();
@@ -41,9 +44,11 @@ export const optionalAuthMiddleware = (
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, env.jwtSecret);
-      req.userId = (decoded as any).id;
-      req.user = decoded;
+      const decoded = jwt.verify(token, env.jwtSecret) as any;
+      if (decoded.purpose !== "2fa_pending") {
+        req.userId = decoded.id;
+        req.user = decoded;
+      }
     } catch {
     }
   }

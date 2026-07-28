@@ -32,22 +32,24 @@
       </div>
 
       <form @submit.prevent="handleLogin" style="display:flex;flex-direction:column;gap:12px">
-        <input
-          v-model="form.email"
-          type="email"
-          placeholder="Email"
-          class="at-input"
-          required
-          :disabled="requiresTwoFactor"
-        />
-        <input
-          v-model="form.password"
-          type="password"
-          placeholder="Mot de passe"
-          class="at-input"
-          required
-          :disabled="requiresTwoFactor"
-        />
+        <template v-if="!oauthMode">
+          <input
+            v-model="form.email"
+            type="email"
+            placeholder="Email"
+            class="at-input"
+            required
+            :disabled="requiresTwoFactor"
+          />
+          <input
+            v-model="form.password"
+            type="password"
+            placeholder="Mot de passe"
+            class="at-input"
+            required
+            :disabled="requiresTwoFactor"
+          />
+        </template>
 
         <template v-if="requiresTwoFactor">
           <input
@@ -89,7 +91,7 @@
           class="at-btn-primary"
           style="width:100%;min-height:46px;margin-top:4px"
         >
-          {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+          {{ isLoading ? 'Connexion...' : (oauthMode ? 'Valider le code' : 'Se connecter') }}
         </button>
       </form>
 
@@ -102,8 +104,15 @@
 </template>
 
 <script setup lang="ts">
-const { login, loginWithGoogle, loginWithGithub, isLoading, error: authError } =
-  useAuth();
+const {
+  login,
+  loginWithGoogle,
+  loginWithGithub,
+  completeOAuthTwoFactor,
+  oauthTwoFactorPending,
+  isLoading,
+  error: authError,
+} = useAuth();
 const config = useRuntimeConfig();
 const { ensureLoaded, prompt } = useGoogleAuth();
 
@@ -117,8 +126,13 @@ const form = reactive({
 const error = ref("");
 const requiresTwoFactor = ref(false);
 const useBackupCode = ref(false);
+const oauthMode = ref(false);
 
 const handleLogin = async () => {
+  if (oauthMode.value) {
+    return handleOAuthTwoFactorSubmit();
+  }
+
   try {
     error.value = "";
     await login(
@@ -138,6 +152,27 @@ const handleLogin = async () => {
   }
 };
 
+const handleOAuthTwoFactorSubmit = async () => {
+  try {
+    error.value = "";
+    if (!oauthTwoFactorPending.value) {
+      error.value = "Session expirée, reconnectez-vous.";
+      oauthMode.value = false;
+      requiresTwoFactor.value = false;
+      return;
+    }
+    await completeOAuthTwoFactor(
+      oauthTwoFactorPending.value,
+      form.totpToken || undefined,
+      form.backupCode || undefined,
+    );
+    oauthTwoFactorPending.value = null;
+    await navigateTo("/animes");
+  } catch {
+    error.value = authError.value || "Code invalide";
+  }
+};
+
 const handleGithubLogin = () => {
   const params = new URLSearchParams({
     client_id: config.public.githubClientId as string,
@@ -150,7 +185,14 @@ const handleGithubLogin = () => {
 const handleGoogleCredential = async (response: { credential: string }) => {
   try {
     error.value = "";
-    await loginWithGoogle(response.credential);
+    const result = await loginWithGoogle(response.credential);
+    if (result?.requiresTwoFactor) {
+      oauthTwoFactorPending.value = result.pendingToken;
+      oauthMode.value = true;
+      requiresTwoFactor.value = true;
+      error.value = "Entrez le code généré par votre application 2FA";
+      return;
+    }
     await navigateTo("/animes");
   } catch {
     error.value = authError.value || "Identifiants invalides";
@@ -165,6 +207,12 @@ onMounted(() => {
   if (useAuth().isAuthenticated.value) {
     navigateTo("/animes");
     return;
+  }
+
+  if (oauthTwoFactorPending.value) {
+    oauthMode.value = true;
+    requiresTwoFactor.value = true;
+    error.value = "Entrez le code généré par votre application 2FA";
   }
 
   ensureLoaded(handleGoogleCredential);

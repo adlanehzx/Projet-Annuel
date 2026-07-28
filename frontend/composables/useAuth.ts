@@ -15,6 +15,13 @@ export const useAuth = () => {
 
   const { get, post, put, del, postForm } = useApi();
 
+  // Relais entre la page de callback GitHub (redirection pleine page) et la
+  // page de login, quand le compte OAuth a la 2FA activée.
+  const oauthTwoFactorPending = useState<string | null>(
+    "auth.oauthTwoFactorPending",
+    () => null,
+  );
+
   const register = async (
     email: string,
     username: string,
@@ -72,12 +79,17 @@ export const useAuth = () => {
     }
   };
 
+  // Réponse OAuth : soit une session complète (token + user), soit un
+  // pendingToken si le compte a la 2FA activée (à finaliser via
+  // completeOAuthTwoFactor).
   const loginWithGoogle = async (idToken: string) => {
     isLoading.value = true;
     error.value = "";
     try {
       const response = await post("/auth/oauth/google", { idToken });
-      applySession(response.data);
+      if (!response.data.requiresTwoFactor) {
+        applySession(response.data);
+      }
       return response.data;
     } catch (err: any) {
       error.value =
@@ -93,11 +105,36 @@ export const useAuth = () => {
     error.value = "";
     try {
       const response = await post("/auth/oauth/github", { code });
-      applySession(response.data);
+      if (!response.data.requiresTwoFactor) {
+        applySession(response.data);
+      }
       return response.data;
     } catch (err: any) {
       error.value =
         err.response?.data?.error || "Erreur de connexion avec GitHub";
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const completeOAuthTwoFactor = async (
+    pendingToken: string,
+    totpToken?: string,
+    backupCode?: string,
+  ) => {
+    isLoading.value = true;
+    error.value = "";
+    try {
+      const response = await post("/auth/oauth/2fa", {
+        pendingToken,
+        totpToken,
+        backupCode,
+      });
+      applySession(response.data);
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.error || "Code invalide";
       throw err;
     } finally {
       isLoading.value = false;
@@ -235,6 +272,8 @@ export const useAuth = () => {
     login,
     loginWithGoogle,
     loginWithGithub,
+    completeOAuthTwoFactor,
+    oauthTwoFactorPending,
     logout,
     get2FAStatus,
     setup2FA,
