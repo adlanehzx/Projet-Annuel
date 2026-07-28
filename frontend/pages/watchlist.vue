@@ -1,6 +1,6 @@
 <template>
   <div class="watchlist-page" style="max-width:1180px;margin:0 auto;padding:24px 24px 40px;width:100%">
-    <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0 0 14px;color:var(--text-primary)">
+    <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:-0.01em;margin:0 0 14px;color:var(--text-primary)">
       Ma Watchlist
     </h1>
 
@@ -11,13 +11,14 @@
       style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 20px;text-align:center"
     >
       <BrandSeal :size="72" format="svg" style="opacity:0.25" />
-      <div style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">Aucun anime ici</div>
+      <div style="font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--text-primary)">Aucun animé ici</div>
       <div style="font-size:14px;color:var(--text-secondary);max-width:380px">
-        Ajoutez des animes depuis le catalogue pour suivre votre progression.
+        Ajoutez des animés depuis le catalogue pour suivre votre progression.
       </div>
       <NuxtLink
         to="/animes"
-        style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none"
+        class="at-btn-primary"
+        style="padding:12px 24px;text-decoration:none;display:inline-flex;align-items:center"
       >
         Parcourir le catalogue
       </NuxtLink>
@@ -30,7 +31,7 @@
             Classement personnel
           </div>
           <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">
-            {{ watchlist.length }} anime(s)
+            {{ watchlist.length }} animé(s)
           </div>
         </div>
 
@@ -47,7 +48,9 @@
             role="button"
             tabindex="0"
             @keydown.enter="selectedItemId = item.id"
-            :style="`display:flex;gap:10px;padding:10px;border-radius:10px;border:1px solid ${selectedItemId === item.id ? 'var(--color-accent-primary)' : dragOverItemId === item.id ? 'var(--color-accent-secondary)' : 'var(--border)'};background:${selectedItemId === item.id ? 'rgba(214,67,43,0.08)' : 'var(--bg-input)'};cursor:grab;transition:border-color .12s ease`"
+            :style="`display:flex;gap:10px;padding:10px;border-radius:10px;border:1px solid ${selectedItemId === item.id ? 'var(--color-accent-primary)' : dragOverItemId === item.id ? 'var(--color-accent-secondary)' : 'var(--border)'};background:${selectedItemId === item.id ? 'rgba(192,25,43,0.08)' : 'var(--bg-input)'};cursor:grab`"
+            class="at-list-row"
+            :class="{ 'is-selected': selectedItemId === item.id }"
           >
             <div style="width:22px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-tertiary);font-family:var(--font-mono);font-size:11px;line-height:1">
               <span>#{{ Number(index) + 1 }}</span>
@@ -59,8 +62,15 @@
               <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">🎌</div>
             </div>
 
-            <div style="flex:1;min-width:0">
-              <div style="font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+            <div style="flex:1;min-width:0;position:relative">
+              <BrandSeal
+                v-if="item.status === 'COMPLETED'"
+                :size="34"
+                format="svg"
+                loading="eager"
+                style="position:absolute;right:0;top:0;z-index:2;transform:rotate(-8deg);opacity:0.92;pointer-events:none"
+              />
+              <div :style="`font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:${item.status === 'COMPLETED' ? '40px' : '0'}`">
                 {{ item.title }}
               </div>
               <div style="margin-top:5px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">
@@ -74,7 +84,7 @@
         </div>
       </section>
 
-      <aside style="position:sticky;top:74px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <aside class="watchlist-aside" style="position:sticky;top:74px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px">
         <template v-if="selectedItem">
           <img
             v-if="selectedItem.posterPath"
@@ -96,7 +106,6 @@
               <option value="TO_WATCH">À voir</option>
               <option value="WATCHING">En cours</option>
               <option value="COMPLETED">Terminé</option>
-              <option value="DROPPED">Abandonné</option>
               <option value="ON_HOLD">En pause</option>
             </select>
           </label>
@@ -118,16 +127,18 @@
             />
           </label>
 
-          <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div class="watchlist-actions" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
             <button
               @click="saveProgress"
-              style="flex:1;padding:10px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer"
+              class="at-btn-primary"
+              style="flex:1;min-width:140px;padding:10px;font-size:13px"
             >
               Enregistrer progression
             </button>
             <button
               @click="removeItem(selectedItem.id)"
-              style="padding:10px 12px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer"
+              class="at-btn-secondary"
+              style="padding:10px 12px;font-size:13px"
             >
               Retirer
             </button>
@@ -137,12 +148,12 @@
             :to="`/animes/${selectedItem.animeId}`"
             style="display:block;text-align:center;padding:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;font-size:13px;text-decoration:none"
           >
-            Ouvrir la fiche anime
+            Ouvrir la fiche animé
           </NuxtLink>
         </template>
 
         <div v-else style="padding:18px 8px;text-align:center;color:var(--text-secondary);font-size:13px">
-          Sélectionne un anime de la liste pour afficher le détail.
+          Sélectionne un animé de la liste pour afficher le détail.
         </div>
       </aside>
     </div>
@@ -151,10 +162,9 @@
 
 <script setup lang="ts">
 import { useWatchlist } from "../composables/useWatchlist";
-// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+// @ts-ignore
 import { io } from "socket.io-client";
 
-// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
 declare const definePageMeta: any;
 declare const useRuntimeConfig: any;
 declare const useState: any;
@@ -230,7 +240,6 @@ const statusLabel = (s: string) => {
     TO_WATCH: "À voir",
     WATCHING: "En cours",
     COMPLETED: "Terminé",
-    DROPPED: "Abandonné",
     ON_HOLD: "En pause",
   };
   return labels[s] || s;
@@ -333,15 +342,19 @@ const removeItem = async (id: number) => {
 </script>
 
 <style scoped>
-@media (max-width: 980px) {
+@media (max-width: 1023px) {
   .watchlist-page {
     padding: 16px 14px 30px !important;
   }
-}
-
-@media (max-width: 980px) {
   .watchlist-layout {
     grid-template-columns: 1fr !important;
+  }
+  .watchlist-aside {
+    position: static !important;
+    top: auto !important;
+  }
+  .watchlist-actions > button {
+    flex: 1 1 100%;
   }
 }
 </style>

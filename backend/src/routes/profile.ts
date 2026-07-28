@@ -53,7 +53,6 @@ router.get("/stats", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/profile/genres - répartition des genres de la watchlist de l'utilisateur connecté
 router.get("/genres", async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;

@@ -4,7 +4,8 @@
     role="dialog"
     aria-live="polite"
     aria-label="Banniere de consentement aux cookies"
-    style="position:fixed;left:16px;right:16px;bottom:16px;z-index:120;max-width:920px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:16px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.2)"
+    style="position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:120;max-width:920px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:16px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.2)"
+    class="at-cookie-banner"
   >
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
       <div style="min-width:0;flex:1">
@@ -49,4 +50,12 @@ onMounted(() => {
 const accept = () => setChoice("accepted");
 const reject = () => setChoice("rejected");
 </script>
+
+<style scoped>
+@media (max-width: 1023px) {
+  .at-cookie-banner {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+</style>
 

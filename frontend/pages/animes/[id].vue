@@ -3,11 +3,11 @@
 
     <div v-if="loading" style="text-align:center;padding:64px;color:var(--text-secondary)">Chargement…</div>
 
-    <div v-else-if="!anime" style="text-align:center;padding:64px;color:var(--color-accent-primary)">Anime introuvable</div>
+    <div v-else-if="!anime" style="text-align:center;padding:64px;color:var(--color-accent-primary)">Animé introuvable</div>
 
     <template v-else>
-      <div style="display:flex;gap:36px;align-items:flex-start">
-        <div style="position:relative;width:220px;flex-shrink:0;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--bg-elevated);border:1px solid var(--border)">
+      <div class="anime-detail-layout">
+        <div class="anime-detail-poster">
           <img v-if="anime.imageUrl" :src="anime.imageUrl" :alt="anime.title" style="width:100%;height:100%;object-fit:cover" />
           <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px">🎌</div>
           <div
@@ -17,13 +17,15 @@
           <BrandSeal
             v-if="watchlistItem?.status === 'COMPLETED'"
             :size="84"
-            format="png"
+            format="svg"
+            loading="eager"
+            class="anime-detail-seal"
             style="position:absolute;right:12px;bottom:12px;z-index:2;transform:rotate(-8deg);opacity:0.9"
           />
         </div>
 
-        <div style="flex:1;min-width:0">
-          <h1 style="font-family:var(--font-display);font-weight:700;font-size:34px;margin:0 0 8px;color:var(--text-primary)">{{ anime.title }}</h1>
+        <div class="anime-detail-info" style="flex:1;min-width:0">
+          <h1 class="anime-detail-title" style="font-family:var(--font-display);font-weight:700;font-size:34px;letter-spacing:-0.01em;margin:0 0 8px;color:var(--text-primary)">{{ anime.title }}</h1>
           <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">{{ metaLine }}</div>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -34,29 +36,32 @@
             >{{ item.genre?.name ?? item }}</span>
           </div>
 
-          <div style="display:flex;align-items:baseline;gap:10px;margin-top:20px">
-            <span style="font-family:var(--font-display);font-weight:700;font-size:42px;line-height:1;color:var(--text-primary)">{{ anime.score?.toFixed(1) ?? '—' }}</span>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:20px">
+            <span style="font-family:var(--font-mono);font-size:18px;color:var(--rating)">★</span>
+            <span class="anime-detail-score" style="font-family:var(--font-display);font-weight:700;font-size:42px;letter-spacing:-0.02em;line-height:1;color:var(--rating)">{{ anime.score?.toFixed(1) ?? '—' }}</span>
             <span style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">/10 · Jikan score</span>
           </div>
 
           <div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;align-items:center;position:relative">
             <button
               @click="requireAuth(() => statusOpen = !statusOpen)"
-              style="display:inline-flex;align-items:center;gap:10px;padding:12px 20px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-family:var(--font-body);font-weight:500;font-size:15px;cursor:pointer"
+              class="at-btn-primary"
+              style="display:inline-flex;align-items:center;gap:10px;padding:12px 20px;font-weight:500;font-size:15px"
             >{{ ctaLabel }} <span style="font-size:11px">▾</span></button>
             <button
               @click="requireAuth(() => reviewOpen = !reviewOpen)"
-              style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-family:var(--font-body);font-weight:500;font-size:14px;cursor:pointer"
+              class="at-btn-secondary"
+              style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px"
             >☆ Noter</button>
 
-            <Transition name="at-fade">
-              <div v-if="statusOpen" style="position:absolute;left:0;top:54px;z-index:40;min-width:240px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
-                <button v-for="opt in statusOpts" :key="opt.value" @click="pickStatus(opt.value)" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;background:none;border:none;border-radius:6px;font-family:var(--font-body);font-size:14px;color:var(--text-primary);cursor:pointer">
+            <Transition name="at-panel">
+              <div v-if="statusOpen" class="at-panel" style="position:absolute;left:0;top:54px;z-index:40;min-width:240px;padding:6px">
+                <button v-for="opt in statusOpts" :key="opt.value" @click="pickStatus(opt.value)" class="at-menu-item" style="display:flex;align-items:center;gap:10px">
                   <span style="flex:1">{{ opt.label }}</span>
-                  <BrandSeal v-if="watchlistItem?.status === opt.value" :size="18" format="svg" style="transform:rotate(-5deg)" />
+                  <BrandSeal v-if="opt.value === 'COMPLETED' && watchlistItem?.status === 'COMPLETED'" :size="18" format="svg" loading="eager" style="transform:rotate(-5deg);flex-shrink:0" />
                 </button>
                 <div style="height:1px;background:var(--border);margin:4px 8px"></div>
-                <button v-if="watchlistItem" @click="removeFromWatchlist" style="display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;border-radius:6px;font-family:var(--font-body);font-size:13px;color:var(--color-accent-primary);cursor:pointer">Retirer de ma watchlist</button>
+                <button v-if="watchlistItem" @click="removeFromWatchlist" class="at-menu-item is-danger">Retirer de ma watchlist</button>
               </div>
             </Transition>
           </div>
@@ -67,17 +72,6 @@
       </div>
 
       <p style="margin-top:26px;max-width:720px;font-size:15px;line-height:1.65;color:var(--text-secondary)">{{ anime.synopsis || 'Synopsis indisponible.' }}</p>
-
-      <Transition name="at-fade">
-        <ReviewForm
-          v-if="reviewOpen"
-          :model-value="myReview"
-          :loading="reviewLoading"
-          :error-message="reviewError"
-          @submit="saveReview"
-          @cancel="reviewOpen = false"
-        />
-      </Transition>
 
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:20px;margin:36px 0 14px;color:var(--text-primary)">Reviews ({{ communityReviews.length }})</h2>
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
@@ -90,10 +84,20 @@
         />
         <div v-if="communityReviews.length === 0" style="padding:28px;border:1px dashed var(--border);border-radius:10px;text-align:center;color:var(--text-secondary);font-size:14px">
           Aucune review pour l'instant.
-          <button v-if="!reviewOpen" @click="requireAuth(() => reviewOpen = true)" style="margin-top:12px;display:block;margin-inline:auto;padding:8px 16px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;cursor:pointer">Écrire la première review</button>
+          <button v-if="!reviewOpen" @click="requireAuth(() => reviewOpen = true)" class="at-btn-secondary" style="margin-top:12px;display:block;margin-inline:auto;padding:8px 16px;font-size:13px">Écrire la première review</button>
         </div>
       </div>
     </template>
+
+    <ReviewForm
+      v-if="reviewOpen && anime"
+      :anime-title="anime.title"
+      :model-value="myReview"
+      :loading="reviewLoading"
+      :error-message="reviewError"
+      @submit="saveReview"
+      @cancel="reviewOpen = false"
+    />
   </div>
 </template>
 
@@ -103,10 +107,9 @@ import { useAnimes } from "../../composables/useAnimes";
 import { useReviews } from "../../composables/useReviews";
 import { useAuth } from "../../composables/useAuth";
 import { useAuthGuard } from "../../composables/useAuthGuard";
-// @ts-ignore - provided at runtime and typed via local shim when Nuxt types are incomplete.
+// @ts-ignore
 import { io } from "socket.io-client";
 
-// Nuxt auto-imports these at runtime; declare them for TS when Nuxt types are unavailable.
 declare const useRoute: () => any;
 declare const useRuntimeConfig: any;
 declare const useState: any;
@@ -132,7 +135,7 @@ const reviewOpen = ref(false);
 const reviewLoading = ref(false);
 const reviewError = ref("");
 const watchlistError = ref("");
-const myReview = ref({ id: null as number | null, rating: 7, comment: "" });
+const myReview = ref({ id: null as number | null, rating: 7, comment: "", hasSpoilers: false });
 const communityReviews = ref([] as any[]);
 const likeLoadingReviewId = ref(null as number | null);
 
@@ -156,7 +159,7 @@ onMounted(async () => {
     const wi = watchlistItem.value;
     if (wi) {
       const rev = await getReview(wi.id);
-      if (rev) myReview.value = rev;
+      if (rev) myReview.value = { ...myReview.value, ...rev, hasSpoilers: !!rev.hasSpoilers };
     }
 
     const token = useState("auth.token", () => "").value;
@@ -201,7 +204,7 @@ const metaLine = computed(() => {
 
 const ctaLabel = computed(() => {
   if (!watchlistItem.value) return "+ Ajouter à ma watchlist";
-  const labels: Record<string, string> = { TO_WATCH: "À voir", WATCHING: "En cours", COMPLETED: "Terminé", DROPPED: "Abandonné", ON_HOLD: "En pause" };
+  const labels: Record<string, string> = { TO_WATCH: "À voir", WATCHING: "En cours", COMPLETED: "Terminé", ON_HOLD: "En pause" };
   return labels[watchlistItem.value.status] ?? watchlistItem.value.status;
 });
 
@@ -209,7 +212,6 @@ const statusOpts = [
   { value: "TO_WATCH", label: "À voir" },
   { value: "WATCHING", label: "En cours" },
   { value: "COMPLETED", label: "Terminé" },
-  { value: "DROPPED", label: "Abandonné" },
   { value: "ON_HOLD", label: "En pause" },
 ];
 
@@ -252,12 +254,12 @@ const saveReview = async (payload: {
   id: number | null;
   rating: number;
   comment: string;
+  hasSpoilers: boolean;
 }) => {
   try {
     reviewError.value = "";
     reviewLoading.value = true;
 
-    // Une review est liée à une entrée watchlist: on crée l'entrée au besoin.
     let targetWatchlistItem = watchlistItem.value;
     if (!targetWatchlistItem) {
       await addToWatchlist(animeId);
@@ -274,6 +276,7 @@ const saveReview = async (payload: {
       payload.rating,
       payload.comment,
       payload.id || undefined,
+      payload.hasSpoilers,
     );
     myReview.value = {
       ...myReview.value,
@@ -314,6 +317,44 @@ const toggleLike = async (review: { id: number; likedByMe?: boolean }) => {
 </script>
 
 <style scoped>
-.at-fade-enter-active, .at-fade-leave-active { transition: opacity 0.15s ease; }
-.at-fade-enter-from, .at-fade-leave-to { opacity: 0; }
+.anime-detail-layout {
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+}
+.anime-detail-poster {
+  position: relative;
+  width: 220px;
+  flex-shrink: 0;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .anime-detail-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+  .anime-detail-poster {
+    width: min(200px, 58vw);
+    margin-inline: auto;
+  }
+  .anime-detail-title {
+    font-size: 26px !important;
+    text-align: center;
+  }
+  .anime-detail-info {
+    text-align: center;
+  }
+  .anime-detail-info > div:first-of-type {
+    justify-content: center;
+  }
+  .anime-detail-score {
+    font-size: 34px !important;
+  }
+}
 </style>

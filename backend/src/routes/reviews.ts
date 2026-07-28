@@ -10,7 +10,7 @@ router.post("/", async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     if (!userId) return res.status(401).json({ error: "Non authentifié" });
 
-    const { watchlistId, rating, comment } = req.body;
+    const { watchlistId, rating, comment, hasSpoilers } = req.body;
 
     if (rating < 0 || rating > 10) {
       return res.status(400).json({ error: "La note doit être entre 0 et 10" });
@@ -23,7 +23,7 @@ router.post("/", async (req: Request, res: Response) => {
     if (existing) {
       const updated = await prisma.review.update({
         where: { id: existing.id },
-        data: { rating, comment },
+        data: { rating, comment, hasSpoilers: !!hasSpoilers },
       });
 
       await recalculateAnimeRatingByWatchlistId(existing.watchlistId);
@@ -35,7 +35,7 @@ router.post("/", async (req: Request, res: Response) => {
     }
 
     const review = await prisma.review.create({
-      data: { userId, watchlistId, rating, comment },
+      data: { userId, watchlistId, rating, comment, hasSpoilers: !!hasSpoilers },
     });
 
     await recalculateAnimeRatingByWatchlistId(review.watchlistId);
@@ -52,7 +52,6 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// GET / - mes reviews récentes (paginées)
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -91,7 +90,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Non authentifié" });
 
     const reviewId = parseInt(req.params.id);
-    const { rating, comment } = req.body;
+    const { rating, comment, hasSpoilers } = req.body;
 
     if (Number.isNaN(reviewId)) {
       return res.status(400).json({ error: "ID invalide" });
@@ -109,7 +108,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     const updated = await prisma.review.update({
       where: { id: reviewId },
-      data: { rating, comment },
+      data: { rating, comment, hasSpoilers: !!hasSpoilers },
     });
 
     await recalculateAnimeRatingByWatchlistId(review.watchlistId);
@@ -123,8 +122,6 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// GET /reviews/anime/:animeId - reviews de la communauté pour un anime,
-// accessible sans être connecté et sans avoir soi-même cet anime en watchlist.
 router.get("/anime/:animeId", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -133,7 +130,7 @@ router.get("/anime/:animeId", async (req: Request, res: Response) => {
     const reviews = await prisma.review.findMany({
       where: { watchlist: { animeId } },
       include: {
-        user: { select: { username: true } },
+        user: { select: { username: true, avatar: true } },
         likes: userId ? { where: { userId }, select: { id: true } } : false,
         _count: { select: { likes: true } },
       },
@@ -158,10 +155,6 @@ router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
 
-    // Chaque utilisateur a sa propre entrée Watchlist pour un même anime :
-    // on résout l'animeId depuis l'entrée fournie, puis on récupère les
-    // reviews de TOUS les utilisateurs sur cet anime (pas seulement celles
-    // liées à cette entrée précise, propre à un seul utilisateur).
     const watchlistEntry = await prisma.watchlist.findUnique({
       where: { id: parseInt(req.params.watchlistId) },
       select: { animeId: true },
@@ -174,7 +167,7 @@ router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
     const reviews = await prisma.review.findMany({
       where: { watchlist: { animeId: watchlistEntry.animeId } },
       include: {
-        user: { select: { username: true } },
+        user: { select: { username: true, avatar: true } },
         likes: userId ? { where: { userId }, select: { id: true } } : false,
         _count: { select: { likes: true } },
       },

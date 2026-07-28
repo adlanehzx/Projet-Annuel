@@ -1,13 +1,13 @@
 <template>
   <main class="max-w-7xl mx-auto px-4 py-12">
-    <h1 class="text-3xl font-bold mb-8">Rechercher un anime</h1>
+    <h1 class="text-3xl font-bold mb-8 font-display tracking-title">Rechercher un animé</h1>
 
     <div class="card p-6 mb-8">
       <div class="flex gap-4">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Chercher un anime..."
+          placeholder="Chercher un animé..."
           class="input flex-1"
           @keyup.enter="handleSearch"
         />
@@ -27,7 +27,7 @@
     </div>
 
     <div v-else-if="results.length === 0 && searched" class="text-center py-12">
-      <p class="text-slate-400">Aucun anime trouvé</p>
+      <p class="text-slate-400">Aucun animé trouvé</p>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -53,9 +53,9 @@
         <div class="p-4">
           <h3 class="font-bold truncate">{{ anime.title }}</h3>
           <p class="text-sm text-slate-400">
-            {{ anime.titleEnglish || anime.status || "Anime" }}
+            {{ anime.titleEnglish || anime.status || "Animé" }}
           </p>
-          <div v-if="anime.score" class="text-xs text-yellow-400 mt-2">
+          <div v-if="anime.score" class="text-xs text-rating mt-2">
             ⭐ {{ anime.score.toFixed(1) }}/10
           </div>
 
@@ -66,7 +66,7 @@
               'w-full mt-4 py-2 rounded font-semibold transition',
               isInWatchlist(anime.id)
                 ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
-                : 'bg-amber-500 hover:bg-amber-600 text-slate-900',
+                : 'bg-at-accent-primary hover:bg-at-accent-primary-hover text-white',
             ]"
           >
             {{ isInWatchlist(anime.id) ? "✓ Dans ma watchlist" : "+ Ajouter" }}
@@ -105,7 +105,7 @@ const handleSearch = async () => {
     results.value = await searchAnimes(searchQuery.value);
 
     if (results.value.length === 0) {
-      error.value = "Aucun anime trouvé";
+      error.value = "Aucun animé trouvé";
     }
   } catch (err: any) {
     error.value = "Erreur lors de la recherche";

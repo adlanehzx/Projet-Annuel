@@ -8,7 +8,7 @@ import { env } from "../config/env.js";
 export const generateTOTPSecret = async (email: string) => {
   const secret = speakeasy.generateSecret({
     name: `Movie Tracker (${email})`,
-    issuer: "Movie Tracker",
+    issuer: "HankoTrack",
     length: 32,
   });
 
@@ -47,7 +47,6 @@ export const comparePassword = (password: string, hash: string): boolean => {
   return bcrypt.compareSync(password, hash);
 };
 
-// Alphabet sans caractères ambigus (pas de O/0, I/1)
 const BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const generateBackupCode = (): string => {
@@ -59,16 +58,12 @@ const generateBackupCode = (): string => {
   return `${raw.slice(0, 4)}-${raw.slice(4)}`;
 };
 
-// Génère un nouveau lot de codes de secours 2FA (à usage unique), en clair -
-// ils ne doivent être renvoyés au client qu'une seule fois, jamais relus.
 export const generateBackupCodes = (count = 8): string[] =>
   Array.from({ length: count }, generateBackupCode);
 
 export const hashBackupCode = (code: string): string =>
   bcrypt.hashSync(code.trim().toUpperCase(), 10);
 
-// Retourne l'index du code de secours correspondant (à consommer/retirer),
-// ou -1 si aucun ne correspond.
 export const findBackupCodeIndex = (
   hashedCodes: string[],
   candidate: string,

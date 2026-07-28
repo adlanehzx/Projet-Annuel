@@ -13,7 +13,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ["Space Grotesk", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-display)", ...defaultTheme.fontFamily.sans],
         sans: ["Inter", ...defaultTheme.fontFamily.sans],
         mono: ["IBM Plex Mono", ...defaultTheme.fontFamily.mono],
       },
@@ -25,10 +25,11 @@ export default {
           "bg-light": "#E6DAD2",
           "bg-light-elevated": "#EFE9E3",
           "bg-light-input": "#FFFFFF",
-          "accent-primary": "#D6432B",
-          "accent-primary-hover": "#C53620",
+          "accent-primary": "#C0192B",
+          "accent-primary-hover": "#A81525",
           "accent-secondary": "#35408C",
           "accent-secondary-hover": "#2A3370",
+          rating: "var(--rating)",
           "text-primary-dark": "#F1F0EC",
           "text-secondary-dark": "#B8B7B0",
           "text-tertiary-dark": "#7F7D74",

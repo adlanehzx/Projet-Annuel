@@ -159,7 +159,7 @@ router.post("/:id/animes", async (req: Request, res: Response) => {
 
     const anime = await prisma.anime.findUnique({ where: { id: animeId } });
 
-    if (!anime) return res.status(404).json({ error: "Anime non trouvé" });
+    if (!anime) return res.status(404).json({ error: "Animé non trouvé" });
 
     const position = await prisma.listAnime.aggregate({
       where: { listId: id },
@@ -178,7 +178,7 @@ router.post("/:id/animes", async (req: Request, res: Response) => {
     res.status(201).json(listAnime);
   } catch (error: any) {
     if (error.code === "P2002") {
-      return res.status(400).json({ error: "Cet anime est déjà dans la liste" });
+      return res.status(400).json({ error: "Cet animé est déjà dans la liste" });
     }
 
     res.status(500).json({ error: "Erreur serveur" });
@@ -213,7 +213,7 @@ router.delete("/:id/animes/:animeId", async (req: Request, res: Response) => {
     });
 
     if (!listAnime) {
-      return res.status(404).json({ error: "Anime absent de la liste" });
+      return res.status(404).json({ error: "Animé absent de la liste" });
     }
 
     await prisma.listAnime.delete({ where: { id: listAnime.id } });
@@ -233,7 +233,7 @@ router.put("/:id/reorder", async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Non authentifié" });
     if (!id) return res.status(400).json({ error: "Identifiant invalide" });
     if (!Array.isArray(animeIds) || animeIds.length === 0) {
-      return res.status(400).json({ error: "La liste des animes est requise" });
+      return res.status(400).json({ error: "La liste des animés est requise" });
     }
 
     const orderedAnimeIds = animeIds.map((animeId) => parseId(String(animeId)));
@@ -264,7 +264,7 @@ router.put("/:id/reorder", async (req: Request, res: Response) => {
     });
 
     if (existingItems.length !== orderedAnimeIds.length) {
-      return res.status(400).json({ error: "Certains animes ne sont pas dans la liste" });
+      return res.status(400).json({ error: "Certains animés ne sont pas dans la liste" });
     }
 
     await prisma.$transaction(

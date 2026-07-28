@@ -2,10 +2,10 @@
   <div class="min-h-screen bg-slate-900 text-white p-6">
     <div class="max-w-7xl mx-auto">
       <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold">Mes Collections</h1>
+        <h1 class="text-4xl font-bold font-display tracking-title">Mes Collections</h1>
         <button
           @click="showCreateModal = true"
-          class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
+          class="bg-at-accent-primary hover:bg-at-accent-primary-hover px-6 py-2 rounded-lg font-semibold transition"
         >
           + Nouvelle collection
         </button>
@@ -76,7 +76,7 @@
         </p>
         <button
           @click="showCreateModal = true"
-          class="inline-block bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
+          class="inline-block bg-at-accent-primary hover:bg-at-accent-primary-hover px-6 py-2 rounded-lg font-semibold transition"
         >
           Créer une collection
         </button>
@@ -97,7 +97,7 @@
               ✕
             </button>
 
-            <h2 class="text-2xl font-bold mb-6">Nouvelle collection</h2>
+            <h2 class="text-2xl font-bold mb-6 font-display tracking-title">Nouvelle collection</h2>
 
             <div class="space-y-4">
               <div>
@@ -106,7 +106,7 @@
                   v-model="newCollection.name"
                   type="text"
                   placeholder="Ex: À regarder cet hiver"
-                  class="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-amber-500 focus:outline-none"
+                  class="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-at-accent-primary focus:outline-none"
                 />
               </div>
 
@@ -117,7 +117,7 @@
                 <textarea
                   v-model="newCollection.description"
                   placeholder="Description optionnelle..."
-                  class="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-amber-500 focus:outline-none h-24 resize-none"
+                  class="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-at-accent-primary focus:outline-none h-24 resize-none"
                 />
               </div>
 
@@ -142,7 +142,7 @@
                 <button
                   @click="createCollection"
                   :disabled="!newCollection.name || createLoading"
-                  class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 px-4 py-2 rounded font-semibold transition"
+                  class="flex-1 bg-at-accent-primary hover:bg-at-accent-primary-hover disabled:bg-slate-600 px-4 py-2 rounded font-semibold transition"
                 >
                   Créer
                 </button>

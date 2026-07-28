@@ -27,6 +27,7 @@ export const useApi = () => {
         if (process.client) {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
+          useWatchlist().clearWatchlist();
         }
         navigateTo("/auth/login");
       }
@@ -37,7 +38,8 @@ export const useApi = () => {
   const get = (url: string) => api.get(url);
   const post = (url: string, data: any) => api.post(url, data);
   const put = (url: string, data: any) => api.put(url, data);
-  const del = (url: string) => api.delete(url);
+  const del = (url: string, data?: any) =>
+    data !== undefined ? api.delete(url, { data }) : api.delete(url);
   // Le navigateur fixe lui-même le Content-Type multipart avec sa boundary
   // dès que le body est une instance FormData (comportement XHR/fetch natif).
   const postForm = (url: string, formData: FormData) =>
