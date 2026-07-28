@@ -44,6 +44,20 @@ router.get("/:username", async (req: Request, res: Response) => {
         },
       },
     });
+
+    const publicLists = await prisma.list.findMany({
+      where: {
+        userId: user.id,
+        isPublic: true,
+      },
+      include: {
+        animes: {
+          include: { anime: true },
+          orderBy: { position: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
     const completedCount = await prisma.watchlist.count({
       where: {
         userId: user.id,
@@ -73,6 +87,7 @@ router.get("/:username", async (req: Request, res: Response) => {
         averageRating: Math.round(averageRating * 100) / 100,
       },
       publicCollections,
+      publicLists,
     });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });

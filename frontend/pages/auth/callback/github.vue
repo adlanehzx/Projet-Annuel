@@ -26,7 +26,14 @@ onMounted(async () => {
 
   try {
     await loginWithGithub(code);
-    await navigateTo("/");
+    // Rechargement complet plutôt qu'une navigation SPA : cette page est déjà
+    // un rechargement frais (redirection externe github.com -> retour), donc
+    // basculer en SPA juste après avoir changé l'état d'authentification fait
+    // courir la bascule de layout (app.vue) et la navigation en même temps,
+    // ce qui provoquait une perte de session. La session est déjà persistée
+    // en localStorage à ce stade, un rechargement propre la retrouve sans
+    // conflit.
+    window.location.href = "/";
   } catch (err) {
     error.value = authError.value || "Erreur de connexion avec GitHub";
   }

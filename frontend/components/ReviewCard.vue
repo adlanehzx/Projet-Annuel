@@ -6,7 +6,14 @@
 
     <div style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-weight:500;font-size:14px;color:var(--text-primary)">
+        <NuxtLink
+          v-if="props.review.user?.username"
+          :to="`/profiles/${props.review.user.username}`"
+          style="font-weight:500;font-size:14px;color:var(--text-primary);text-decoration:none"
+        >
+          {{ username }}
+        </NuxtLink>
+        <span v-else style="font-weight:500;font-size:14px;color:var(--text-primary)">
           {{ username }}
         </span>
         <span style="font-family:var(--font-mono);font-size:13px;color:var(--color-accent-primary)">

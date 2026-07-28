@@ -88,7 +88,7 @@ app.use("/api/animes", animeRoutes);
 
 // Routes protégées
 app.use("/api/watchlist", authMiddleware, watchlistRoutes);
-app.use("/api/reviews", authMiddleware, reviewRoutes);
+app.use("/api/reviews", optionalAuthMiddleware, reviewRoutes);
 app.use("/api/collections", authMiddleware, collectionRoutes);
 app.use("/api/lists", authMiddleware, listRoutes);
 app.use("/api/recommendations", authMiddleware, recommendationRoutes);

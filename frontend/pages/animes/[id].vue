@@ -120,7 +120,7 @@ const animeId = parseInt(route.params.id as string);
 
 const { getAnimeDetails } = useAnimes();
 const { fetchWatchlist, getWatchlistItem, addToWatchlist, updateStatus, removeFromWatchlist: removeWatchlistItem } = useWatchlist();
-const { getReview, getMovieReviews, createOrUpdateReview, likeReview, unlikeReview } = useReviews();
+const { getReview, getAnimeReviews, createOrUpdateReview, likeReview, unlikeReview } = useReviews();
 const { isAuthenticated } = useAuth();
 const { requireAuth } = useAuthGuard();
 const runtimeConfig = useRuntimeConfig();
@@ -151,11 +151,12 @@ onMounted(async () => {
   try {
     if (isAuthenticated.value) await fetchWatchlist();
     anime.value = await getAnimeDetails(animeId);
+    communityReviews.value = await getAnimeReviews(animeId);
+
     const wi = watchlistItem.value;
     if (wi) {
       const rev = await getReview(wi.id);
       if (rev) myReview.value = rev;
-      communityReviews.value = await getMovieReviews(wi.id);
     }
 
     const token = useState("auth.token", () => "").value;
@@ -278,7 +279,7 @@ const saveReview = async (payload: {
       ...myReview.value,
       ...payload,
     };
-    communityReviews.value = await getMovieReviews(targetWatchlistItem.id);
+    communityReviews.value = await getAnimeReviews(animeId);
     reviewOpen.value = false;
   } catch (e: any) {
     reviewError.value = e.response?.data?.error || e.message || "Erreur lors de l'enregistrement";
