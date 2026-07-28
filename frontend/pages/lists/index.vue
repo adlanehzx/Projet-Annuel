@@ -1,140 +1,94 @@
 <template>
-  <div class="min-h-screen bg-slate-900 text-white p-6">
-    <div class="max-w-5xl mx-auto">
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold">Mes listes</h1>
-        <button
-          @click="showCreateModal = true"
-          class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
-        >
-          + Nouvelle liste
-        </button>
-      </div>
+  <div style="max-width:1100px;margin:0 auto;padding:24px 24px 48px;width:100%">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+      <h1 style="font-family:var(--font-display);font-weight:700;font-size:26px;margin:0;color:var(--text-primary)">Mes listes</h1>
+      <button
+        @click="showCreateModal = true"
+        style="padding:12px 24px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer"
+      >
+        + Créer une liste
+      </button>
+    </div>
 
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-slate-400">Chargement...</p>
-      </div>
+    <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-      <div v-else-if="error" class="bg-red-900 border border-red-700 text-red-100 p-4 rounded mb-6">
-        {{ error }}
-      </div>
-
-      <div v-else-if="lists.length === 0" class="text-center py-16">
-        <p class="text-slate-400 text-lg mb-4">Aucune liste pour le moment</p>
-        <button
-          @click="showCreateModal = true"
-          class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition"
-        >
-          Créer ma première liste
-        </button>
-      </div>
-
-      <div v-else class="grid gap-6">
-        <div
-          v-for="list in lists"
-          :key="list.id"
-          class="bg-slate-800 rounded-lg p-6 border border-slate-700 hover:border-amber-500/50 transition"
-        >
-          <div class="flex justify-between items-start mb-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-1">
-                <h2 class="text-xl font-bold">{{ list.title }}</h2>
-                <span
-                  class="text-xs px-2 py-0.5 rounded-full"
-                  :class="list.isPublic ? 'bg-green-500/20 text-green-400' : 'bg-slate-600 text-slate-400'"
-                >
-                  {{ list.isPublic ? "Publique" : "Privée" }}
-                </span>
-              </div>
-              <p v-if="list.description" class="text-slate-400 text-sm">{{ list.description }}</p>
-              <p class="text-slate-500 text-xs mt-1">{{ list.animes?.length || 0 }} anime(s)</p>
-            </div>
-            <div class="flex gap-2 ml-4">
-              <NuxtLink
-                :to="`/lists/${list.id}`"
-                class="px-4 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-sm font-semibold transition"
-              >
-                Voir
-              </NuxtLink>
-              <button
-                @click="confirmDelete(list)"
-                class="px-4 py-1.5 rounded bg-red-600/80 hover:bg-red-600 text-sm font-semibold transition"
-              >
-                Supprimer
-              </button>
-            </div>
+    <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px">
+      <div
+        v-for="list in lists"
+        :key="list.id"
+        role="button"
+        tabindex="0"
+        @click="navigateTo(`/lists/${list.id}`)"
+        @keydown.enter="navigateTo(`/lists/${list.id}`)"
+        style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow 0.2s"
+      >
+        <div style="display:flex;height:110px;background:var(--bg)">
+          <div v-for="(item, idx) in (list.animes || []).slice(0, 4)" :key="idx" style="flex:1;overflow:hidden;border-right:1px solid var(--border);background:linear-gradient(135deg,var(--bg),var(--bg-elevated))">
+            <img v-if="item.posterPath" :src="item.posterPath" :alt="item.title" style="width:100%;height:100%;object-fit:cover" />
           </div>
+          <template v-for="_ in Math.max(0, 4 - (list.animes || []).length)" :key="'empty-' + _">
+            <div style="flex:1;border-right:1px solid var(--border)"></div>
+          </template>
+        </div>
 
-          <div v-if="list.animes?.length > 0" class="flex gap-2 overflow-x-auto pb-1">
-            <img
-              v-for="item in list.animes.slice(0, 6)"
-              :key="item.id"
-              :src="item.anime.imageUrl"
-              :alt="item.anime.title"
-              class="w-12 h-16 object-cover rounded flex-shrink-0"
-            />
-            <div
-              v-if="list.animes.length > 6"
-              class="w-12 h-16 bg-slate-700 rounded flex-shrink-0 flex items-center justify-center text-xs text-slate-400"
-            >
-              +{{ list.animes.length - 6 }}
-            </div>
+        <div style="padding:14px 16px">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)">{{ list.title }}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:7px">
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">{{ (list.animes || []).length }} anime{{ (list.animes || []).length !== 1 ? 's' : '' }}</span>
+            <span style="padding:3px 8px;background:var(--color-accent-secondary);color:#fff;border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:600">{{ list.isPublic ? 'Public' : 'Privé' }}</span>
           </div>
         </div>
       </div>
+
+      <button
+        @click="showCreateModal = true"
+        style="border:2px dashed var(--border);border-radius:12px;min-height:180px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;cursor:pointer;background:transparent"
+      >
+        + Nouvelle liste
+      </button>
     </div>
 
     <Teleport to="body">
       <Transition name="fade">
         <div
           v-if="showCreateModal"
-          class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
-          @click.self="showCreateModal = false"
+          style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:80"
+          @click.self="closeCreateModal"
         >
-          <div class="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Nouvelle liste</h2>
-            <div class="space-y-4">
-              <div>
-                <label class="text-sm text-slate-400 mb-1 block">Titre *</label>
-                <input v-model="form.title" type="text" class="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-amber-500 focus:outline-none" placeholder="Mon top shonen..." />
-              </div>
-              <div>
-                <label class="text-sm text-slate-400 mb-1 block">Description</label>
-                <textarea v-model="form.description" class="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-amber-500 focus:outline-none resize-none h-20" placeholder="Description de la liste..." />
-              </div>
-              <div class="flex items-center gap-2">
-                <input v-model="form.isPublic" type="checkbox" id="isPublic" class="accent-amber-500" />
-                <label for="isPublic" class="text-sm text-slate-300">Rendre publique</label>
-              </div>
-              <div v-if="createError" class="text-red-400 text-sm">{{ createError }}</div>
-              <div class="flex gap-3 pt-2">
-                <button
-                  @click="handleCreate"
-                  :disabled="createLoading"
-                  class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 py-2 rounded font-semibold transition"
-                >
-                  {{ createLoading ? "Création..." : "Créer" }}
-                </button>
-                <button @click="showCreateModal = false" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-semibold transition">
-                  Annuler
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
+          <div style="width:100%;max-width:460px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:18px">
+            <h2 style="margin:0 0 14px;font-family:var(--font-display);font-size:20px;color:var(--text-primary)">Nouvelle liste</h2>
 
-      <Transition name="fade">
-        <div
-          v-if="listToDelete"
-          class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
-        >
-          <div class="bg-slate-800 rounded-lg p-6 w-full max-w-sm text-center">
-            <p class="text-lg font-semibold mb-2">Supprimer la liste ?</p>
-            <p class="text-slate-400 text-sm mb-6">« {{ listToDelete.title }} » sera définitivement supprimée.</p>
-            <div class="flex gap-3">
-              <button @click="handleDelete" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded font-semibold transition">Supprimer</button>
-              <button @click="listToDelete = null" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-semibold transition">Annuler</button>
+            <label style="display:block;margin-bottom:10px">
+              <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Nom de la liste *</div>
+              <input
+                v-model="form.title"
+                type="text"
+                placeholder="Ex: Mes classiques"
+                style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:14px;outline:none"
+              />
+            </label>
+
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer">
+              <input v-model="form.isPublic" type="checkbox" />
+              <span style="font-size:14px;color:var(--text-primary)">Rendre publique</span>
+            </label>
+
+            <p v-if="createError" style="margin:0 0 12px;color:var(--color-accent-primary);font-size:13px">{{ createError }}</p>
+
+            <div style="display:flex;gap:10px">
+              <button
+                @click="handleCreate"
+                :disabled="createLoading"
+                style="flex:1;padding:10px 12px;background:var(--color-accent-primary);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer"
+              >
+                {{ createLoading ? 'Création...' : 'Créer' }}
+              </button>
+              <button
+                @click="closeCreateModal"
+                style="flex:1;padding:10px 12px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer"
+              >
+                Annuler
+              </button>
             </div>
           </div>
         </div>
@@ -148,30 +102,34 @@ import { useLists } from "~/composables/useLists";
 
 definePageMeta({ middleware: "auth" });
 
-const { lists, loading, error, fetchLists, createList, deleteList } = useLists();
+const { lists, loading, fetchLists, createList } = useLists();
 
 const showCreateModal = ref(false);
 const createLoading = ref(false);
 const createError = ref("");
-const listToDelete = ref<any>(null);
+const form = reactive({
+  title: "",
+  isPublic: false,
+});
 
-const form = reactive({ title: "", description: "", isPublic: false });
-
-onMounted(() => fetchLists());
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+  createError.value = "";
+  form.title = "";
+  form.isPublic = false;
+};
 
 const handleCreate = async () => {
   if (!form.title.trim()) {
-    createError.value = "Le titre est requis";
+    createError.value = "Le nom de la liste est requis";
     return;
   }
+
   try {
     createLoading.value = true;
     createError.value = "";
-    await createList(form.title.trim(), form.description.trim(), form.isPublic);
-    showCreateModal.value = false;
-    form.title = "";
-    form.description = "";
-    form.isPublic = false;
+    await createList(form.title.trim(), "", form.isPublic);
+    closeCreateModal();
   } catch (e: any) {
     createError.value = e.response?.data?.error || "Erreur lors de la création";
   } finally {
@@ -179,22 +137,17 @@ const handleCreate = async () => {
   }
 };
 
-const confirmDelete = (list: any) => {
-  listToDelete.value = list;
-};
-
-const handleDelete = async () => {
-  if (!listToDelete.value) return;
-  try {
-    await deleteList(listToDelete.value.id);
-    listToDelete.value = null;
-  } catch {
-    listToDelete.value = null;
-  }
-};
+onMounted(() => fetchLists());
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
