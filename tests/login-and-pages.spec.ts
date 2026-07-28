@@ -16,11 +16,15 @@ test.describe('Connexion', () => {
     });
 
     await page.goto('/auth/login');
+    // Attend la fin de l'hydratation Vue avant d'interagir : sinon le clic
+    // peut arriver avant que @submit.prevent soit attaché, et le formulaire
+    // se soumet nativement au lieu d'être intercepté par le SPA.
+    await page.waitForLoadState('networkidle');
     await page.getByPlaceholder('Email').fill(testUser.email);
     await page.getByPlaceholder('Mot de passe').fill('mot-de-passe-e2e');
     await page.getByRole('button', { name: 'Se connecter' }).click();
 
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/animes$/);
     await expect(page.getByText(testUser.username, { exact: true })).toBeVisible();
     await expect.poll(() => page.evaluate(() => localStorage.getItem('token'))).toBe('e2e-token');
   });

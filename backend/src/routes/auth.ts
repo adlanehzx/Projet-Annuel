@@ -1,9 +1,11 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import jwt from "jsonwebtoken";
 import {
   generateTOTPSecret,
   verifyTOTPToken,
   generateJWT,
+  generateTwoFactorPendingToken,
   hashPassword,
   comparePassword,
   generateBackupCodes,
@@ -12,6 +14,7 @@ import {
 } from "../services/auth.js";
 import { verifyGoogleIdToken, exchangeGithubCode } from "../services/oauth.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { env } from "../config/env.js";
 import type { OAuthProfile } from "../services/oauth.js";
 import { emitToAll } from "../realtime/socket.js";
 
@@ -275,6 +278,13 @@ router.post("/oauth/google", async (req: Request, res: Response) => {
     const profile = await verifyGoogleIdToken(idToken);
     const user = await findOrCreateOAuthUser("google", profile);
 
+    if (user.totpEnabled) {
+      return res.json({
+        requiresTwoFactor: true,
+        pendingToken: generateTwoFactorPendingToken(user.id),
+      });
+    }
+
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
@@ -302,6 +312,13 @@ router.post("/oauth/github", async (req: Request, res: Response) => {
     const profile = await exchangeGithubCode(code);
     const user = await findOrCreateOAuthUser("github", profile);
 
+    if (user.totpEnabled) {
+      return res.json({
+        requiresTwoFactor: true,
+        pendingToken: generateTwoFactorPendingToken(user.id),
+      });
+    }
+
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
@@ -320,6 +337,67 @@ router.post("/oauth/github", async (req: Request, res: Response) => {
       .json({ error: error.message || "Authentification GitHub invalide" });
   }
 });
+
+// Complète une connexion OAuth (Google/GitHub) sur un compte avec 2FA
+// activée : échange le pendingToken + le code TOTP/de secours contre un
+// vrai token de session.
+router.post("/oauth/2fa", async (req: Request, res: Response) => {
+  try {
+    const { pendingToken, totpToken, backupCode } = req.body;
+    if (!pendingToken)
+      return res.status(400).json({ error: "Session 2FA manquante" });
+
+    let payload: any;
+    try {
+      payload = jwt.verify(pendingToken, env.jwtSecret);
+    } catch {
+      return res
+        .status(401)
+        .json({ error: "Session 2FA expirée, reconnectez-vous" });
+    }
+    if (payload.purpose !== "2fa_pending") {
+      return res.status(401).json({ error: "Session 2FA invalide" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user || !user.totpEnabled) {
+      return res.status(401).json({ error: "2FA non activée" });
+    }
+
+    if (backupCode) {
+      const idx = findBackupCodeIndex(user.totpBackupCodes, backupCode);
+      if (idx === -1)
+        return res.status(401).json({ error: "Code de secours invalide" });
+
+      const remaining = [...user.totpBackupCodes];
+      remaining.splice(idx, 1);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { totpBackupCodes: remaining },
+      });
+    } else if (!totpToken) {
+      return res
+        .status(401)
+        .json({ error: "2FA requis", requiresTwoFactor: true });
+    } else if (!user.totpSecret || !verifyTOTPToken(user.totpSecret, totpToken)) {
+      return res.status(401).json({ error: "Code 2FA invalide" });
+    }
+
+    const token = generateJWT(user.id, user.email);
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;

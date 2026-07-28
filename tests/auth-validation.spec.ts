@@ -3,6 +3,9 @@ import { expect, test } from '@playwright/test';
 test.describe('Inscription', () => {
   test('refuse un mot de passe trop court avant tout appel au serveur', async ({ page }) => {
     await page.goto('/auth/register');
+    // Attend la fin de l'hydratation Vue avant d'interagir (cf.
+    // login-and-pages.spec.ts pour le contexte).
+    await page.waitForLoadState('networkidle');
 
     await page.getByPlaceholder("Nom d'utilisateur").fill('e2e-user');
     await page.getByPlaceholder('Email').fill('e2e@example.test');
@@ -16,6 +19,9 @@ test.describe('Inscription', () => {
 
   test('refuse deux mots de passe différents', async ({ page }) => {
     await page.goto('/auth/register');
+    // Attend la fin de l'hydratation Vue avant d'interagir (cf.
+    // login-and-pages.spec.ts pour le contexte).
+    await page.waitForLoadState('networkidle');
 
     await page.getByPlaceholder("Nom d'utilisateur").fill('e2e-user');
     await page.getByPlaceholder('Email').fill('e2e@example.test');
