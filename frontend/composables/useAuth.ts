@@ -8,8 +8,15 @@ export const useAuth = () => {
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
     if (savedToken && savedUser) {
-      token.value = savedToken;
-      user.value = JSON.parse(savedUser);
+      try {
+        user.value = JSON.parse(savedUser);
+        token.value = savedToken;
+      } catch {
+        // localStorage corrompu (ex. "undefined" en toutes lettres) - on
+        // repart sur une session propre plutôt que de planter l'app.
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
     }
   }
 
