@@ -18,6 +18,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const existing = await prisma.review.findUnique({
       where: { userId_watchlistId: { userId, watchlistId } },
+      include: { watchlist: { select: { animeId: true } } },
     });
 
     if (existing) {
@@ -31,8 +32,16 @@ router.post("/", async (req: Request, res: Response) => {
         reason: "review-updated",
         watchlistId: existing.watchlistId,
       });
+      emitToRoom(`anime:${existing.watchlist.animeId}`, "review:list-changed", {
+        animeId: existing.watchlist.animeId,
+      });
       return res.json(updated);
     }
+
+    const watchlistEntry = await prisma.watchlist.findUnique({
+      where: { id: watchlistId },
+      select: { animeId: true },
+    });
 
     const review = await prisma.review.create({
       data: { userId, watchlistId, rating, comment, hasSpoilers: !!hasSpoilers },
@@ -45,6 +54,11 @@ router.post("/", async (req: Request, res: Response) => {
       watchlistId: review.watchlistId,
     });
     emitToAll("stats:global-changed", { reason: "review-created" });
+    if (watchlistEntry) {
+      emitToRoom(`anime:${watchlistEntry.animeId}`, "review:list-changed", {
+        animeId: watchlistEntry.animeId,
+      });
+    }
 
     res.status(201).json(review);
   } catch (error) {
@@ -100,7 +114,10 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "La note doit être entre 0 et 10" });
     }
 
-    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { watchlist: { select: { animeId: true } } },
+    });
 
     if (!review || review.userId !== userId) {
       return res.status(403).json({ error: "Accès refusé" });
@@ -115,6 +132,9 @@ router.put("/:id", async (req: Request, res: Response) => {
     emitToUser(userId, "profile:stats-updated", {
       reason: "review-updated",
       watchlistId: review.watchlistId,
+    });
+    emitToRoom(`anime:${review.watchlist.animeId}`, "review:list-changed", {
+      animeId: review.watchlist.animeId,
     });
     res.json(updated);
   } catch (error) {
@@ -212,6 +232,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     const review = await prisma.review.findUnique({
       where: { id: parseInt(req.params.id) },
+      include: { watchlist: { select: { animeId: true } } },
     });
 
     if (!review || review.userId !== userId) {
@@ -219,6 +240,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     }
 
     const deletedWatchlistId = review.watchlistId;
+    const animeId = review.watchlist.animeId;
     await prisma.review.delete({ where: { id: parseInt(req.params.id) } });
     await recalculateAnimeRatingByWatchlistId(deletedWatchlistId);
     emitToUser(userId, "profile:stats-updated", {
@@ -226,6 +248,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       watchlistId: deletedWatchlistId,
     });
     emitToAll("stats:global-changed", { reason: "review-deleted" });
+    emitToRoom(`anime:${animeId}`, "review:list-changed", { animeId });
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });

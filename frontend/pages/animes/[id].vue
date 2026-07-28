@@ -150,6 +150,10 @@ const handleLikeUpdated = (payload: { reviewId: number; likesCount: number }) =>
   };
 };
 
+const handleReviewListChanged = async () => {
+  communityReviews.value = await getAnimeReviews(animeId);
+};
+
 onMounted(async () => {
   try {
     if (isAuthenticated.value) await fetchWatchlist();
@@ -162,22 +166,24 @@ onMounted(async () => {
       if (rev) myReview.value = { ...myReview.value, ...rev, hasSpoilers: !!rev.hasSpoilers };
     }
 
+    // La connexion socket n'exige plus de token côté serveur : un visiteur
+    // anonyme peut aussi recevoir les mises à jour publiques (likes, nouvelles
+    // reviews) sur cette page.
     const token = useState("auth.token", () => "").value;
-    if (token) {
-      const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
-      const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+    const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
+    const socketUrl = baseUrl.replace(/\/api\/?$/, "");
 
-      animeSocket = io(socketUrl, {
-        transports: ["websocket"],
-        auth: { token },
-      });
+    animeSocket = io(socketUrl, {
+      transports: ["websocket"],
+      auth: token ? { token } : {},
+    });
 
-      animeSocket.on("connect", () => {
-        animeSocket.emit("subscribe:anime", animeId);
-      });
+    animeSocket.on("connect", () => {
+      animeSocket.emit("subscribe:anime", animeId);
+    });
 
-      animeSocket.on("review:like-updated", handleLikeUpdated);
-    }
+    animeSocket.on("review:like-updated", handleLikeUpdated);
+    animeSocket.on("review:list-changed", handleReviewListChanged);
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 });
@@ -186,6 +192,7 @@ onBeforeUnmount(() => {
   if (animeSocket) {
     animeSocket.emit("unsubscribe:anime", animeId);
     animeSocket.off("review:like-updated", handleLikeUpdated);
+    animeSocket.off("review:list-changed", handleReviewListChanged);
     animeSocket.disconnect();
     animeSocket = null;
   }
