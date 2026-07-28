@@ -5,8 +5,9 @@
 
     <template v-else>
       <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-        <div style="width:72px;height:72px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;flex-shrink:0">
-          {{ (user?.username || '?').slice(0, 2).toUpperCase() }}
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;flex-shrink:0;overflow:hidden">
+          <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <template v-else>{{ (user?.username || '?').slice(0, 2).toUpperCase() }}</template>
         </div>
         <div style="flex:1;min-width:200px">
           <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--text-primary)">{{ user?.username }}</div>
@@ -70,6 +71,8 @@ import { io } from "socket.io-client";
 definePageMeta({ middleware: "auth" });
 
 const { user } = useAuth();
+const { resolve: resolveAvatarUrl } = useAvatarUrl();
+const avatarSrc = computed(() => resolveAvatarUrl(user.value?.avatar));
 const api = useApi();
 
 const loading = ref(true);

@@ -3,6 +3,55 @@
     <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;margin:0 0 20px;color:var(--text-primary)">Paramètres</h1>
 
     <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Photo de profil</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">JPEG, PNG ou WebP, 5 Mo maximum.</p>
+
+      <div
+        v-if="avatarFeedback"
+        style="margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px"
+        :style="avatarFeedbackIsError
+          ? 'background:rgba(214,67,43,0.1);border:1px solid rgba(214,67,43,0.3);color:var(--color-accent-primary)'
+          : 'background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.3);color:#2ea043'"
+      >
+        {{ avatarFeedback }}
+      </div>
+
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;flex-shrink:0;overflow:hidden">
+          <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <template v-else>{{ (user?.username || '?').slice(0, 2).toUpperCase() }}</template>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <input
+            ref="avatarInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style="display:none"
+            @change="handleAvatarSelected"
+          />
+          <button
+            class="at-btn-secondary"
+            style="max-width:200px"
+            :disabled="avatarLoading"
+            @click="avatarInput?.click()"
+          >
+            {{ avatarLoading ? "Envoi..." : "Changer la photo" }}
+          </button>
+          <button
+            v-if="avatarSrc"
+            class="at-btn-secondary"
+            style="max-width:160px"
+            :disabled="avatarLoading"
+            @click="handleRemoveAvatar"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Confidentialité</h2>
       <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">
         Un profil public permet aux autres utilisateurs de voir tes statistiques, tes listes publiques et tes reviews via ton profil.
@@ -162,6 +211,7 @@
 definePageMeta({ middleware: "auth" });
 
 const {
+  user,
   get2FAStatus,
   setup2FA,
   enable2FA,
@@ -169,7 +219,66 @@ const {
   regenerateBackupCodes,
   getMyProfile,
   updateMyProfile,
+  uploadAvatar,
+  removeAvatar,
 } = useAuth();
+const { resolve: resolveAvatarUrl } = useAvatarUrl();
+
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarLoading = ref(false);
+const avatarFeedback = ref("");
+const avatarFeedbackIsError = ref(false);
+const avatarSrc = computed(() => resolveAvatarUrl(user.value?.avatar));
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const handleAvatarSelected = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+
+  avatarFeedback.value = "";
+
+  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    avatarFeedback.value = "Format non supporté (jpeg, png ou webp uniquement)";
+    avatarFeedbackIsError.value = true;
+    return;
+  }
+  if (file.size > MAX_AVATAR_SIZE) {
+    avatarFeedback.value = "L'image dépasse la taille maximale autorisée (5 Mo)";
+    avatarFeedbackIsError.value = true;
+    return;
+  }
+
+  avatarLoading.value = true;
+  try {
+    await uploadAvatar(file);
+    avatarFeedback.value = "Photo de profil mise à jour.";
+    avatarFeedbackIsError.value = false;
+  } catch (err: any) {
+    avatarFeedback.value = err.response?.data?.error || "Erreur lors de l'envoi";
+    avatarFeedbackIsError.value = true;
+  } finally {
+    avatarLoading.value = false;
+  }
+};
+
+const handleRemoveAvatar = async () => {
+  avatarLoading.value = true;
+  avatarFeedback.value = "";
+  try {
+    await removeAvatar();
+    avatarFeedback.value = "Photo de profil supprimée.";
+    avatarFeedbackIsError.value = false;
+  } catch (err: any) {
+    avatarFeedback.value = err.response?.data?.error || "Erreur lors de la suppression";
+    avatarFeedbackIsError.value = true;
+  } finally {
+    avatarLoading.value = false;
+  }
+};
 
 const loadingPrivacy = ref(true);
 const privacyLoading = ref(false);

@@ -13,7 +13,7 @@ export const useAuth = () => {
     }
   }
 
-  const { get, post, put } = useApi();
+  const { get, post, put, del, postForm } = useApi();
 
   const register = async (
     email: string,
@@ -144,6 +144,25 @@ export const useAuth = () => {
     return response.data;
   };
 
+  const applyAvatar = (avatar: string | null) => {
+    user.value = { ...user.value, avatar };
+    if (process.client) localStorage.setItem("user", JSON.stringify(user.value));
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await postForm("/profile/avatar", formData);
+    applyAvatar(response.data.avatar);
+    return response.data;
+  };
+
+  const removeAvatar = async () => {
+    const response = await del("/profile/avatar");
+    applyAvatar(null);
+    return response.data;
+  };
+
   const logout = () => {
     token.value = "";
     user.value = null;
@@ -173,5 +192,7 @@ export const useAuth = () => {
     regenerateBackupCodes,
     getMyProfile,
     updateMyProfile,
+    uploadAvatar,
+    removeAvatar,
   };
 };

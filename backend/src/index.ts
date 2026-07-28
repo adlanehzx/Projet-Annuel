@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
+import path from "path";
 import jwt from "jsonwebtoken";
 import { Server } from "socket.io";
 import userRoutes from "./routes/users.js";
@@ -79,6 +80,9 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Fichiers statiques (avatars uploadés) - pas d'auth : consommés via <img>
+app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Routes publiques
 app.use("/api/auth", authRoutes);

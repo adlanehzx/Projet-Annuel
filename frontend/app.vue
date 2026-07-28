@@ -79,7 +79,10 @@
         <span style="flex:1"></span>
         <button @click="toggleDark" aria-label="Basculer thème" style="width:36px;height:36px;border-radius:999px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:15px;cursor:pointer;line-height:1">{{ isDark ? '☀️' : '🌙' }}</button>
         <div style="position:relative">
-          <button @click="avatarOpen = !avatarOpen" aria-label="Menu du compte" style="width:34px;height:34px;border-radius:999px;border:none;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-display);font-weight:700;font-size:12px;cursor:pointer">{{ initials }}</button>
+          <button @click="avatarOpen = !avatarOpen" aria-label="Menu du compte" style="width:34px;height:34px;border-radius:999px;border:none;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-display);font-weight:700;font-size:12px;cursor:pointer;overflow:hidden;padding:0">
+            <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+            <template v-else>{{ initials }}</template>
+          </button>
           <Transition name="at-fade">
             <div v-if="avatarOpen" style="position:absolute;right:0;top:42px;min-width:180px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:6px;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
               <NuxtLink to="/profile" @click="avatarOpen=false" style="display:block;padding:10px 12px;border-radius:6px;font-size:14px;color:var(--text-primary);text-decoration:none">Profil</NuxtLink>
@@ -119,6 +122,7 @@ declare const navigateTo: any;
 declare const process: any;
 
 const auth = useAuth();
+const { resolve: resolveAvatarUrl } = useAvatarUrl();
 const route = useRoute();
 const { collapsed, init: initSidebar, toggle: toggleSide } = useSidebar();
 const isDark = ref(true);
@@ -201,6 +205,7 @@ const tabStyle = (tab: { to: string }) => {
 };
 
 const initials = computed(() => (auth.user.value?.username || "??").slice(0, 2).toUpperCase());
+const avatarSrc = computed(() => resolveAvatarUrl(auth.user.value?.avatar));
 
 const handleLogout = () => { avatarOpen.value = false; auth.logout(); navigateTo("/"); };
 </script>

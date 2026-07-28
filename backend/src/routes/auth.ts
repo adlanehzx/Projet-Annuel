@@ -334,14 +334,13 @@ router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
 router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
-    const { username, bio, avatar, isPublic } = req.body;
+    const { username, bio, isPublic } = req.body;
 
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
         ...(username && { username }),
         ...(bio !== undefined && { bio }),
-        ...(avatar !== undefined && { avatar }),
         ...(isPublic !== undefined && { isPublic }),
       },
       select: {
