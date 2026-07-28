@@ -4,7 +4,7 @@
       <p v-if="!error" style="font-size:14px;color:var(--text-secondary)">Connexion avec GitHub...</p>
       <div
         v-else
-        style="padding:10px 14px;background:rgba(214,67,43,0.1);border:1px solid rgba(214,67,43,0.3);border-radius:8px;font-size:13px;color:var(--color-accent-primary)"
+        style="padding:10px 14px;background:rgba(192,25,43,0.1);border:1px solid rgba(192,25,43,0.3);border-radius:8px;font-size:13px;color:var(--color-accent-primary)"
       >
         {{ error }}
       </div>
@@ -26,14 +26,7 @@ onMounted(async () => {
 
   try {
     await loginWithGithub(code);
-    // Rechargement complet plutôt qu'une navigation SPA : cette page est déjà
-    // un rechargement frais (redirection externe github.com -> retour), donc
-    // basculer en SPA juste après avoir changé l'état d'authentification fait
-    // courir la bascule de layout (app.vue) et la navigation en même temps,
-    // ce qui provoquait une perte de session. La session est déjà persistée
-    // en localStorage à ce stade, un rechargement propre la retrouve sans
-    // conflit.
-    window.location.href = "/";
+    window.location.href = "/animes";
   } catch (err) {
     error.value = authError.value || "Erreur de connexion avec GitHub";
   }

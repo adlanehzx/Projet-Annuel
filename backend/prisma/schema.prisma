@@ -64,7 +64,6 @@ enum WatchStatus {
   TO_WATCH
   WATCHING
   COMPLETED
-  DROPPED
   ON_HOLD
 }
 
@@ -73,6 +72,7 @@ model Review {
   id    Int     @id @default(autoincrement())
   rating Int @default(0) // 0-10
   comment String?
+  hasSpoilers Boolean @default(false) @map("has_spoilers")
   userId Int
   watchlistId Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,0 +1,1 @@
+ALTER TABLE "Review" ADD COLUMN "has_spoilers" BOOLEAN NOT NULL DEFAULT false;

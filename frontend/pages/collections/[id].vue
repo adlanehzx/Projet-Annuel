@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto">
       <NuxtLink
         to="/collections"
-        class="text-amber-500 hover:text-amber-400 mb-6 inline-block"
+        class="text-at-accent-primary hover:text-at-accent-primary-hover mb-6 inline-block"
       >
         ← Retour aux collections
       </NuxtLink>
@@ -13,10 +13,9 @@
       </div>
 
       <div v-else-if="collection">
-        <!-- Header -->
         <div class="flex justify-between items-start mb-8">
           <div>
-            <h1 class="text-4xl font-bold mb-2">{{ collection.name }}</h1>
+            <h1 class="text-4xl font-bold mb-2 font-display tracking-title">{{ collection.name }}</h1>
             <p class="text-slate-400 mb-4">{{ collection.description }}</p>
             <p class="text-slate-500 text-sm">
               {{ collection.items.length }} film{{
@@ -33,7 +32,6 @@
           </button>
         </div>
 
-        <!-- Films Grid -->
         <div
           v-if="collection.items.length > 0"
           class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
@@ -59,7 +57,6 @@
                 Pas d'affiche
               </div>
 
-              <!-- Remove button -->
               <button
                 @click="removeFromCollection(item.id)"
                 class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded opacity-0 group-hover:opacity-100 transition"
@@ -74,7 +71,6 @@
           </div>
         </div>
 
-        <!-- Empty state -->
         <div v-else class="text-center py-12">
           <p class="text-slate-400 text-lg">Aucun film dans cette collection</p>
         </div>
@@ -119,6 +115,7 @@ const statusLabel = (status: string) => {
     TO_WATCH: "À voir",
     WATCHING: "En cours",
     COMPLETED: "Terminé",
+    ON_HOLD: "En pause",
   };
   return labels[status] || status;
 };

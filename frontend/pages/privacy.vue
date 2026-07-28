@@ -5,11 +5,11 @@
         <p style="font-family:var(--font-mono);font-size:12px;letter-spacing:2px;color:var(--color-accent-primary);margin:0 0 10px">
           CONFIDENTIALITE
         </p>
-        <h1 style="font-family:var(--font-display);font-size:34px;line-height:1.1;margin:0 0 14px">
+        <h1 style="font-family:var(--font-display);font-size:34px;letter-spacing:-0.01em;line-height:1.1;margin:0 0 14px">
           Politique de confidentialite
         </h1>
         <p style="font-size:15px;line-height:1.65;color:var(--text-secondary);margin:0 0 8px">
-          Cette page presente la politique de confidentialite d'AnimeTrack dans le cadre de son exploitation en production. Elle precise quelles donnees sont traitees, dans quels buts et comment exercer vos droits.
+          Cette page presente la politique de confidentialite de HankoTrack dans le cadre de son exploitation en production. Elle precise quelles donnees sont traitees, dans quels buts et comment exercer vos droits.
         </p>
         <p style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);margin:0">
           Derniere mise a jour: 26/07/2026
@@ -17,7 +17,7 @@
       </div>
 
       <section style="padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--bg-elevated)">
-        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 12px">1. Donnees collectees</h2>
+        <h2 style="font-family:var(--font-display);font-size:24px;letter-spacing:-0.01em;margin:0 0 12px">1. Donnees collectees</h2>
         <ul style="margin:0;padding-left:18px;display:grid;gap:8px;color:var(--text-secondary);line-height:1.6">
           <li>Donnees de compte: identifiant, email, methode de connexion.</li>
           <li>Donnees d'utilisation: watchlist, listes, notes et critiques publiees.</li>
@@ -26,16 +26,16 @@
       </section>
 
       <section style="padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--bg-elevated)">
-        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 12px">2. Finalites</h2>
+        <h2 style="font-family:var(--font-display);font-size:24px;letter-spacing:-0.01em;margin:0 0 12px">2. Finalites</h2>
         <ul style="margin:0;padding-left:18px;display:grid;gap:8px;color:var(--text-secondary);line-height:1.6">
-          <li>Fournir les fonctionnalites principales de suivi et d'organisation des animes.</li>
+          <li>Fournir les fonctionnalites principales de suivi et d'organisation des animés.</li>
           <li>Securiser les comptes et prevenir les usages abusifs.</li>
           <li>Mesurer l'audience et la performance du service uniquement lorsque vous l'avez autorise.</li>
         </ul>
       </section>
 
       <section style="padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--bg-elevated)">
-        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 12px">3. Cookies et consentement</h2>
+        <h2 style="font-family:var(--font-display);font-size:24px;letter-spacing:-0.01em;margin:0 0 12px">3. Cookies et consentement</h2>
         <p style="margin:0 0 10px;color:var(--text-secondary);line-height:1.6">
           Les cookies strictement necessaires au fonctionnement (authentification, securite de session) restent actifs.
         </p>
@@ -60,7 +60,7 @@
       </section>
 
       <section style="padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--bg-elevated)">
-        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 12px">4. Duree de conservation</h2>
+        <h2 style="font-family:var(--font-display);font-size:24px;letter-spacing:-0.01em;margin:0 0 12px">4. Duree de conservation</h2>
         <ul style="margin:0;padding-left:18px;display:grid;gap:8px;color:var(--text-secondary);line-height:1.6">
           <li>Donnees de compte conservees tant que le compte est actif.</li>
           <li>Contenus personnels (listes, notes, critiques) supprimes avec le compte ou sur demande, sous reserve des obligations legales applicables.</li>
@@ -69,12 +69,12 @@
       </section>
 
       <section style="padding:24px;border:1px solid var(--border);border-radius:14px;background:var(--bg-elevated)">
-        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 12px">5. Vos droits</h2>
+        <h2 style="font-family:var(--font-display);font-size:24px;letter-spacing:-0.01em;margin:0 0 12px">5. Vos droits</h2>
         <p style="margin:0 0 10px;color:var(--text-secondary);line-height:1.6">
           Conformement au RGPD, vous pouvez demander l'acces, la rectification, l'effacement ou la portabilite de vos donnees.
         </p>
         <p style="margin:0;color:var(--text-secondary);line-height:1.6">
-          Pour exercer ces droits, contactez l'equipe AnimeTrack via le moyen de contact indique dans l'application ou dans la documentation du service.
+          Pour exercer ces droits, contactez l'equipe HankoTrack via le moyen de contact indique dans l'application ou dans la documentation du service.
         </p>
       </section>
 

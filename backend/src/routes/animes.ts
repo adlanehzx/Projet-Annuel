@@ -153,6 +153,42 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/genres", async (_req: Request, res: Response) => {
+  try {
+    const genres = await prisma.genre.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+    res.json(genres);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.get("/filter-options", async (_req: Request, res: Response) => {
+  try {
+    const [genres, yearRows] = await Promise.all([
+      prisma.genre.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.$queryRaw<{ year: number }[]>`
+        SELECT DISTINCT EXTRACT(YEAR FROM aired_from)::int AS year
+        FROM animes
+        WHERE aired_from IS NOT NULL
+        ORDER BY year DESC
+      `,
+    ]);
+
+    res.json({
+      genres,
+      years: yearRows.map((row) => row.year).filter((year) => Number.isFinite(year)),
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.get("/top", async (_req: Request, res: Response) => {
   try {
     const topAnimes = await getCommunityTopAnimes();
@@ -186,7 +222,7 @@ router.get("/:id", async (req: Request, res: Response) => {
       },
     });
 
-    if (!anime) return res.status(404).json({ error: "Anime non trouvé" });
+    if (!anime) return res.status(404).json({ error: "Animé non trouvé" });
 
     res.json(anime);
   } catch (error) {

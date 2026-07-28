@@ -13,7 +13,7 @@ export const useAuth = () => {
     }
   }
 
-  const { get, post, put } = useApi();
+  const { get, post, put, del } = useApi();
 
   const register = async (
     email: string,
@@ -136,11 +136,61 @@ export const useAuth = () => {
 
   const getMyProfile = async () => {
     const response = await get("/auth/profile");
-    return response.data as { isPublic: boolean; [key: string]: any };
+    const profile = response.data as {
+      id: number;
+      username: string;
+      email: string;
+      bio?: string | null;
+      avatar?: string | null;
+      isPublic: boolean;
+      createdAt?: string;
+      [key: string]: any;
+    };
+
+    if (user.value && profile) {
+      user.value = {
+        ...user.value,
+        createdAt: profile.createdAt ?? user.value.createdAt,
+        bio: profile.bio ?? user.value.bio,
+        isPublic: profile.isPublic ?? user.value.isPublic,
+        avatar: profile.avatar ?? user.value.avatar,
+      };
+      if (process.client) {
+        localStorage.setItem("user", JSON.stringify(user.value));
+      }
+    }
+
+    return profile;
   };
 
-  const updateMyProfile = async (data: { isPublic?: boolean }) => {
+  const updateMyProfile = async (data: {
+    isPublic?: boolean;
+    bio?: string | null;
+    username?: string;
+    avatar?: string | null;
+  }) => {
     const response = await put("/auth/profile", data);
+    const updated = response.data;
+
+    if (user.value && updated) {
+      user.value = {
+        ...user.value,
+        ...updated,
+      };
+      if (process.client) {
+        localStorage.setItem("user", JSON.stringify(user.value));
+      }
+    }
+
+    return updated;
+  };
+
+  const deleteMyAccount = async (payload: {
+    confirmation: string;
+    password?: string;
+  }) => {
+    const response = await del("/auth/account", payload);
+    logout();
     return response.data;
   };
 
@@ -151,6 +201,7 @@ export const useAuth = () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     }
+    useWatchlist().clearWatchlist();
   };
 
   const isAuthenticated = computed(() => !!token.value && !!user.value);
@@ -173,5 +224,6 @@ export const useAuth = () => {
     regenerateBackupCodes,
     getMyProfile,
     updateMyProfile,
+    deleteMyAccount,
   };
 };

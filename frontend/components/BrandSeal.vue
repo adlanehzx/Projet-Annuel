@@ -12,9 +12,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-
-const roundSvg = "/images/animetrack-maneki-neko-round.svg";
-const roundPng = "/images/animetrack-maneki-neko-round.png";
+import roundSvg from "~/assets/images/hankotrack-maneki-neko-round.svg";
+import roundPng from "~/assets/images/hankotrack-maneki-neko-round.png";
 
 const props = withDefaults(
   defineProps<{
@@ -26,8 +25,8 @@ const props = withDefaults(
   {
     size: 30,
     format: "svg",
-    alt: "Sceau AnimeTrack",
-    loading: "lazy",
+    alt: "Sceau HankoTrack",
+    loading: "eager",
   },
 );
 

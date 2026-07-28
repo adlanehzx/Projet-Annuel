@@ -31,16 +31,22 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "AnimeTrack",
+      title: "HankoTrack",
       link: [
+        { rel: "icon", type: "image/svg+xml", href: "/images/hankotrack-maneki-neko-round.svg" },
+        { rel: "icon", type: "image/png", href: "/images/hankotrack-maneki-neko-round.png" },
+        { rel: "apple-touch-icon", href: "/images/hankotrack-maneki-neko-round.png" },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
-        { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap",
+        },
       ],
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { name: "description", content: "AnimeTrack — Suivez et découvrez des animes" },
+        { name: "description", content: "HankoTrack — Suivez et découvrez des animés" },
       ],
     },
   },

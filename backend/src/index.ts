@@ -70,7 +70,6 @@ io.on("connection", (socket) => {
 
 setSocketServer(io);
 
-// Middleware
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -80,13 +79,11 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes publiques
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", optionalAuthMiddleware, profileRoutes);
 app.use("/api/profile", authMiddleware, myProfileRoutes);
 app.use("/api/animes", animeRoutes);
 
-// Routes protégées
 app.use("/api/watchlist", authMiddleware, watchlistRoutes);
 app.use("/api/reviews", optionalAuthMiddleware, reviewRoutes);
 app.use("/api/collections", authMiddleware, collectionRoutes);
@@ -95,12 +92,10 @@ app.use("/api/recommendations", authMiddleware, recommendationRoutes);
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/statistics", authMiddleware, statisticsRoutes);
 
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
 
-// Debug config - uniquement disponible hors production
 if (env.nodeEnv !== "production") {
   app.get("/api/health/config", (req, res) => {
     res.json({
@@ -110,15 +105,12 @@ if (env.nodeEnv !== "production") {
   });
 }
 
-// Error Handler
 app.use(errorHandler);
 
-// 404
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Server start
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

@@ -26,8 +26,6 @@ export const useReviews = () => {
     }
   };
 
-  // Reviews de la communauté pour un anime, accessible sans connexion et
-  // sans que l'utilisateur ait besoin d'avoir cet anime dans sa watchlist.
   const getAnimeReviews = async (animeId: number) => {
     try {
       const response = await api.get(`/reviews/anime/${animeId}`);
@@ -43,6 +41,7 @@ export const useReviews = () => {
     rating: number,
     comment: string,
     reviewId?: number,
+    hasSpoilers?: boolean,
   ) => {
     try {
       loading.value = true;
@@ -50,6 +49,7 @@ export const useReviews = () => {
         watchlistId,
         rating,
         comment,
+        hasSpoilers: !!hasSpoilers,
       };
 
       const response = reviewId

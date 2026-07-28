@@ -1,6 +1,42 @@
 <template>
   <div style="max-width:640px;margin:0 auto;padding:24px 24px 48px;width:100%">
-    <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;margin:0 0 20px;color:var(--text-primary)">Paramètres</h1>
+    <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:-0.01em;margin:0 0 20px;color:var(--text-primary)">Paramètres</h1>
+
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Description du profil</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">
+        Cette description est visible par les autres utilisateurs qui visitent ton profil public.
+      </p>
+
+      <div
+        v-if="bioFeedback"
+        style="margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px;background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.3);color:#2ea043"
+      >
+        {{ bioFeedback }}
+      </div>
+      <p v-if="bioError" style="margin:0 0 12px;font-size:13px;color:var(--color-accent-primary)">{{ bioError }}</p>
+
+      <textarea
+        v-model="bioDraft"
+        maxlength="500"
+        rows="4"
+        placeholder="Parlez un peu de vous, de vos goûts animés…"
+        class="at-input"
+        style="resize:vertical;min-height:96px;line-height:1.55;margin-bottom:10px"
+        :disabled="loadingBio || bioSaving"
+      ></textarea>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary)">{{ bioDraft.length }}/500</span>
+        <button
+          type="button"
+          class="at-btn-primary"
+          :disabled="loadingBio || bioSaving"
+          @click="handleSaveBio"
+        >
+          {{ bioSaving ? "Enregistrement…" : "Enregistrer la description" }}
+        </button>
+      </div>
+    </div>
 
     <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Confidentialité</h2>
@@ -30,7 +66,7 @@
       </label>
     </div>
 
-    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px">
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px">
       <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--text-primary)">Authentification à deux facteurs</h2>
       <p style="font-size:13px;color:var(--text-secondary);margin:0 0 20px">
         Ajoutez une couche de sécurité supplémentaire à votre compte.
@@ -40,7 +76,7 @@
         v-if="feedback"
         style="margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px"
         :style="feedbackIsError
-          ? 'background:rgba(214,67,43,0.1);border:1px solid rgba(214,67,43,0.3);color:var(--color-accent-primary)'
+          ? 'background:rgba(192,25,43,0.1);border:1px solid rgba(192,25,43,0.3);color:var(--color-accent-primary)'
           : 'background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.3);color:#2ea043'"
       >
         {{ feedback }}
@@ -48,7 +84,6 @@
 
       <p v-if="loadingStatus" style="font-size:13px;color:var(--text-secondary)">Chargement...</p>
 
-      <!-- Codes de secours à sauvegarder (affichés une seule fois) -->
       <div
         v-if="backupCodesToShow"
         style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding:16px;border:1px solid var(--color-accent-primary);border-radius:10px"
@@ -155,6 +190,56 @@
         </div>
       </template>
     </div>
+
+    <div style="background:var(--bg-elevated);border:1px solid rgba(192,25,43,0.35);border-radius:14px;padding:24px">
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:16px;margin:0 0 4px;color:var(--color-accent-primary)">
+        Supprimer mon compte
+      </h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55">
+        Cette action est définitive. Vos listes, reviews, watchlist et données associées seront effacées.
+      </p>
+
+      <div
+        v-if="deleteError"
+        style="margin-bottom:14px;padding:10px 14px;border-radius:8px;font-size:13px;background:rgba(192,25,43,0.1);border:1px solid rgba(192,25,43,0.3);color:var(--color-accent-primary)"
+      >
+        {{ deleteError }}
+      </div>
+
+      <label style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:13px;font-weight:500;color:var(--text-primary)">
+        Tapez votre nom d'utilisateur pour confirmer
+        <input
+          v-model="deleteConfirmation"
+          type="text"
+          :placeholder="user?.username || 'username'"
+          class="at-input"
+          autocomplete="off"
+        />
+      </label>
+
+      <label
+        v-if="hasPassword"
+        style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;font-size:13px;font-weight:500;color:var(--text-primary)"
+      >
+        Mot de passe
+        <input
+          v-model="deletePassword"
+          type="password"
+          placeholder="Votre mot de passe"
+          class="at-input"
+          autocomplete="current-password"
+        />
+      </label>
+
+      <button
+        type="button"
+        :disabled="deleteLoading || !canDeleteAccount"
+        @click="handleDeleteAccount"
+        :style="`padding:11px 18px;border:none;border-radius:8px;background:var(--color-accent-primary);color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:${(!canDeleteAccount || deleteLoading) ? 'not-allowed' : 'pointer'};opacity:${(!canDeleteAccount || deleteLoading) ? 0.55 : 1}`"
+      >
+        {{ deleteLoading ? "Suppression…" : "Supprimer définitivement mon compte" }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -162,6 +247,7 @@
 definePageMeta({ middleware: "auth" });
 
 const {
+  user,
   get2FAStatus,
   setup2FA,
   enable2FA,
@@ -169,6 +255,7 @@ const {
   regenerateBackupCodes,
   getMyProfile,
   updateMyProfile,
+  deleteMyAccount,
 } = useAuth();
 
 const loadingPrivacy = ref(true);
@@ -176,15 +263,75 @@ const privacyLoading = ref(false);
 const isProfilePublic = ref(false);
 const privacyFeedback = ref("");
 
+const loadingBio = ref(true);
+const bioSaving = ref(false);
+const bioDraft = ref("");
+const bioFeedback = ref("");
+const bioError = ref("");
+const hasPassword = ref(true);
+
+const deleteConfirmation = ref("");
+const deletePassword = ref("");
+const deleteLoading = ref(false);
+const deleteError = ref("");
+
+const canDeleteAccount = computed(() => {
+  const username = user.value?.username || "";
+  if (!username || deleteConfirmation.value.trim() !== username) return false;
+  if (hasPassword.value && !deletePassword.value) return false;
+  return true;
+});
+
 const refreshPrivacy = async () => {
   loadingPrivacy.value = true;
+  loadingBio.value = true;
   try {
     const profile = await getMyProfile();
     isProfilePublic.value = !!profile.isPublic;
+    bioDraft.value = profile.bio || "";
+    hasPassword.value = profile.hasPassword !== false;
   } catch {
-    // silencieux : le statut 2FA plus bas remontera déjà une erreur si l'API est down
   } finally {
     loadingPrivacy.value = false;
+    loadingBio.value = false;
+  }
+};
+
+const handleDeleteAccount = async () => {
+  if (!canDeleteAccount.value) return;
+  const ok = window.confirm(
+    "Confirmer la suppression définitive de votre compte ? Cette action est irréversible.",
+  );
+  if (!ok) return;
+
+  deleteLoading.value = true;
+  deleteError.value = "";
+  try {
+    await deleteMyAccount({
+      confirmation: deleteConfirmation.value.trim(),
+      ...(hasPassword.value ? { password: deletePassword.value } : {}),
+    });
+    await navigateTo("/");
+  } catch (err: any) {
+    deleteError.value =
+      err.response?.data?.error || "Impossible de supprimer le compte";
+  } finally {
+    deleteLoading.value = false;
+  }
+};
+
+const handleSaveBio = async () => {
+  bioSaving.value = true;
+  bioFeedback.value = "";
+  bioError.value = "";
+  try {
+    const updated = await updateMyProfile({ bio: bioDraft.value });
+    bioDraft.value = updated?.bio || "";
+    bioFeedback.value = "Description enregistrée.";
+  } catch (err: any) {
+    bioError.value = err.response?.data?.error || "Impossible d'enregistrer la description";
+  } finally {
+    bioSaving.value = false;
   }
 };
 
@@ -199,7 +346,6 @@ const handleTogglePrivacy = async (event: Event) => {
       ? "Ton profil est maintenant public."
       : "Ton profil est maintenant privé.";
   } catch {
-    // revert visuel : le v-model n'a pas changé puisqu'on utilise :checked, rien à faire
   } finally {
     privacyLoading.value = false;
   }

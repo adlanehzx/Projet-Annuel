@@ -4,6 +4,17 @@ import { emitToUser } from "../realtime/socket.js";
 
 const prisma = new PrismaClient();
 const router = Router();
+
+const ALLOWED_WATCH_STATUSES = [
+  "TO_WATCH",
+  "WATCHING",
+  "COMPLETED",
+  "ON_HOLD",
+] as const;
+
+const isAllowedWatchStatus = (status: unknown): status is (typeof ALLOWED_WATCH_STATUSES)[number] =>
+  typeof status === "string" &&
+  (ALLOWED_WATCH_STATUSES as readonly string[]).includes(status);
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -26,6 +37,9 @@ router.get("/status/:status", async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Non authentifié" });
 
     const status = req.params.status.toUpperCase();
+    if (!isAllowedWatchStatus(status)) {
+      return res.status(400).json({ error: "Statut invalide" });
+    }
     const watchlist = await prisma.watchlist.findMany({
       where: { userId, status: status as any },
       include: { anime: true, reviews: true },
@@ -65,11 +79,15 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Champs requis manquants" });
     }
 
+    if (status !== undefined && !isAllowedWatchStatus(status)) {
+      return res.status(400).json({ error: "Statut invalide" });
+    }
+
     const anime = await prisma.anime.findUnique({
       where: { id: Number(animeId) },
     });
 
-    if (!anime) return res.status(404).json({ error: "Anime non trouvé" });
+    if (!anime) return res.status(404).json({ error: "Animé non trouvé" });
 
     const latestPosition = await prisma.watchlist.aggregate({
       where: { userId },
@@ -98,7 +116,7 @@ router.post("/", async (req: Request, res: Response) => {
     if (error.code === "P2002") {
       return res
         .status(400)
-        .json({ error: "Cet anime est déjà dans votre watchlist" });
+        .json({ error: "Cet animé est déjà dans votre watchlist" });
     }
     res.status(500).json({ error: "Erreur serveur" });
   }
@@ -165,6 +183,10 @@ router.put("/:id/status", async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const { status } = req.body;
 
+    if (!isAllowedWatchStatus(status)) {
+      return res.status(400).json({ error: "Statut invalide" });
+    }
+
     const item = await prisma.watchlist.findUnique({
       where: { id: parseInt(req.params.id) },
       include: { anime: { select: { episodes: true } } },
@@ -174,8 +196,6 @@ router.put("/:id/status", async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Accès refusé" });
     }
 
-    // Aligne automatiquement la progression sur le nouveau statut, quand le
-    // nombre total d'épisodes de l'anime est connu.
     const totalEpisodes = item.anime?.episodes;
     const data: { status: any; progress?: number } = { status };
 

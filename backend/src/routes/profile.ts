@@ -4,7 +4,6 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 const router = Router();
 
-// GET /api/profile/stats - statistiques de l'utilisateur connecté (dashboard profil)
 router.get("/stats", async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
@@ -38,7 +37,6 @@ router.get("/stats", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/profile/genres - répartition des genres de la watchlist de l'utilisateur connecté
 router.get("/genres", async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
