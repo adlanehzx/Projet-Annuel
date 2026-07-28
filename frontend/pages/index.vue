@@ -223,15 +223,18 @@ onMounted(() => {
   fetchStats();
   fetchTopPosters();
 
+  // Pas besoin d'être connecté : cette page n'est de toute façon visible que
+  // par les visiteurs anonymes (les utilisateurs connectés sont redirigés
+  // vers /animes plus haut). Le serveur accepte les sockets sans token pour
+  // les évènements publics comme stats:global-changed.
   const token = useState("auth.token", () => "").value;
-  if (!token) return;
 
   const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
   const socketUrl = baseUrl.replace(/\/api\/?$/, "");
 
   homeSocket = io(socketUrl, {
     transports: ["websocket"],
-    auth: { token },
+    auth: token ? { token } : {},
   });
 
   homeSocket.on("stats:global-changed", fetchStats);

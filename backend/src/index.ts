@@ -33,13 +33,17 @@ const io = new Server(httpServer, {
   },
 });
 
+// Le token est optionnel : les visiteurs anonymes peuvent se connecter pour
+// recevoir les évènements publics (ex. stats:global-changed sur l'accueil),
+// mais ne rejoignent pas de room "user:{id}" personnelle. S'il y a un token,
+// il doit être valide (pas de connexion avec un token invalide).
 io.use((socket, next) => {
   const token =
     (socket.handshake.auth?.token as string | undefined) ||
     (socket.handshake.query?.token as string | undefined);
 
   if (!token) {
-    return next(new Error("Token requis"));
+    return next();
   }
 
   try {
