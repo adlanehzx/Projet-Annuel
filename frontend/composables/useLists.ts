@@ -79,6 +79,11 @@ export const useLists = () => {
     }
   };
 
+  const reorderListAnimes = async (listId: number, animeIds: number[]) => {
+    const response = await api.put(`/lists/${listId}/reorder`, { animeIds });
+    return response.data;
+  };
+
   return {
     lists,
     loading,
@@ -90,5 +95,6 @@ export const useLists = () => {
     deleteList,
     addAnimeToList,
     removeAnimeFromList,
+    reorderListAnimes,
   };
 };

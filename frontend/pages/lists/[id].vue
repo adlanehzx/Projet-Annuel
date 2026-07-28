@@ -1,126 +1,201 @@
 <template>
-  <div class="min-h-screen bg-slate-900 text-white p-6">
-    <div class="max-w-5xl mx-auto">
-      <NuxtLink to="/lists" class="text-amber-500 hover:text-amber-400 mb-6 inline-block">
-        ← Retour aux listes
-      </NuxtLink>
+  <div style="max-width:860px;margin:0 auto;padding:24px 24px 48px;width:100%">
+    <NuxtLink
+      to="/lists"
+      style="display:inline-block;margin-bottom:18px;font-size:14px;color:var(--text-secondary);text-decoration:none"
+    >
+      ← Mes listes
+    </NuxtLink>
 
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-slate-400">Chargement...</p>
-      </div>
+    <div v-if="loading" style="text-align:center;padding:48px;color:var(--text-secondary)">Chargement…</div>
 
-      <div v-else-if="!list" class="text-center py-12">
-        <p class="text-red-400">Liste introuvable</p>
-      </div>
-
-      <div v-else>
-        <div class="flex justify-between items-start mb-8">
-          <div>
-            <div class="flex items-center gap-3 mb-1">
-              <h1 class="text-4xl font-bold">{{ list.title }}</h1>
-              <span
-                class="text-sm px-3 py-0.5 rounded-full"
-                :class="list.isPublic ? 'bg-green-500/20 text-green-400' : 'bg-slate-600 text-slate-400'"
-              >
-                {{ list.isPublic ? "Publique" : "Privée" }}
-              </span>
-            </div>
-            <p v-if="list.description" class="text-slate-400 mt-1">{{ list.description }}</p>
-            <p class="text-slate-500 text-sm mt-1">{{ list.animes?.length || 0 }} anime(s)</p>
-          </div>
-          <button
-            @click="showAddModal = true"
-            class="bg-amber-500 hover:bg-amber-600 px-5 py-2 rounded-lg font-semibold transition flex-shrink-0"
-          >
-            + Ajouter un anime
-          </button>
-        </div>
-
-        <div v-if="list.animes?.length === 0" class="text-center py-16">
-          <p class="text-slate-400 text-lg mb-4">Aucun anime dans cette liste</p>
-          <button @click="showAddModal = true" class="bg-amber-500 hover:bg-amber-600 px-6 py-2 rounded-lg font-semibold transition">
-            Ajouter le premier anime
-          </button>
-        </div>
-
-        <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <div
-            v-for="item in list.animes"
-            :key="item.id"
-            class="group relative"
-          >
-            <div class="bg-slate-800 rounded-lg overflow-hidden">
-              <div class="relative aspect-[2/3] overflow-hidden">
-                <img
-                  v-if="item.anime.imageUrl"
-                  :src="item.anime.imageUrl"
-                  :alt="item.anime.title"
-                  class="w-full h-full object-cover group-hover:scale-105 transition"
-                />
-                <div v-else class="w-full h-full bg-slate-700 flex items-center justify-center text-4xl">🎌</div>
-                <div class="absolute top-2 left-2 bg-slate-900/80 text-xs px-2 py-0.5 rounded">
-                  #{{ item.position }}
-                </div>
-                <button
-                  @click="handleRemove(item.anime.id)"
-                  class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white text-xs px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
-                >
-                  ✕
-                </button>
-              </div>
-              <div class="p-3">
-                <h3 class="font-semibold text-sm truncate">{{ item.anime.title }}</h3>
-                <p v-if="item.anime.score" class="text-yellow-400 text-xs mt-0.5">⭐ {{ item.anime.score.toFixed(1) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div v-else-if="!list" style="text-align:center;padding:48px;color:var(--color-accent-primary)">
+      Liste introuvable
     </div>
+
+    <template v-else>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+        <div style="min-width:0;flex:1">
+          <h1 style="font-family:var(--font-display);font-weight:700;font-size:34px;letter-spacing:-0.01em;margin:0 0 8px;color:var(--text-primary)">
+            {{ list.title }}
+          </h1>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">
+            {{ animeCount }} animé{{ animeCount !== 1 ? "s" : "" }} · {{ list.isPublic ? "Publique" : "Privée" }}
+          </div>
+          <p
+            v-if="list.description"
+            style="margin:10px 0 0;font-size:15px;line-height:1.55;color:var(--text-secondary);max-width:560px"
+          >
+            {{ list.description }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="at-btn-primary"
+          @click="showAddModal = true"
+        >
+          + Ajouter un animé
+        </button>
+      </div>
+
+      <div
+        v-if="animeCount === 0"
+        style="padding:48px 20px;border:1px dashed var(--border);border-radius:12px;text-align:center"
+      >
+        <p style="margin:0 0 14px;font-size:15px;color:var(--text-secondary)">Aucun animé dans cette liste</p>
+        <button type="button" class="at-btn-primary" @click="showAddModal = true">
+          Ajouter le premier animé
+        </button>
+      </div>
+
+      <div v-else style="display:flex;flex-direction:column;gap:10px">
+        <div
+          v-for="(item, index) in list.animes"
+          :key="item.id"
+          class="list-row"
+          draggable="true"
+          @dragstart="onDragStart(item.animeId ?? item.anime?.id)"
+          @dragover.prevent="onDragOverItem(item.animeId ?? item.anime?.id)"
+          @drop.prevent="onDropOnItem(item.animeId ?? item.anime?.id)"
+          @dragend="onDragEnd"
+          :style="rowStyle(item.animeId ?? item.anime?.id)"
+        >
+          <div style="width:28px;text-align:center;font-family:var(--font-mono);font-size:14px;color:var(--text-secondary);flex-shrink:0">
+            {{ Number(index) + 1 }}
+          </div>
+
+          <div
+            title="Glisser pour réordonner"
+            style="width:18px;color:var(--text-tertiary);font-size:12px;letter-spacing:1px;line-height:1.1;cursor:grab;user-select:none;flex-shrink:0"
+          >
+            ⋮⋮
+          </div>
+
+          <div
+            :style="`width:52px;height:70px;border-radius:8px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:${thumbBg(item.anime)};color:${thumbFg(item.anime)};font-family:var(--font-display);font-weight:700;font-size:15px`"
+          >
+            <img
+              v-if="item.anime?.imageUrl"
+              :src="item.anime.imageUrl"
+              :alt="item.anime.title"
+              style="width:100%;height:100%;object-fit:cover"
+            />
+            <span v-else>{{ initials(item.anime?.title) }}</span>
+          </div>
+
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              {{ item.anime?.title || "Animé" }}
+            </div>
+            <div style="margin-top:4px;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">
+              {{ metaLine(item.anime) }}
+            </div>
+          </div>
+
+          <div class="list-row-actions" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <button
+                type="button"
+                title="Monter"
+                :disabled="Number(index) === 0 || reordering"
+                @click.stop="moveItem(Number(index), -1)"
+                class="list-action-btn"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                title="Descendre"
+                :disabled="Number(index) >= animeCount - 1 || reordering"
+                @click.stop="moveItem(Number(index), 1)"
+                class="list-action-btn"
+                style="border-left:1px solid var(--border)"
+              >
+                ↓
+              </button>
+            </div>
+            <button
+              type="button"
+              title="Retirer"
+              :disabled="reordering"
+              @click.stop="handleRemove(item.animeId ?? item.anime?.id)"
+              class="list-action-btn list-action-btn-alone"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <p style="margin:8px 0 0;font-size:13px;color:var(--text-tertiary)">
+          Maintenir ⋮⋮ pour réordonner (drag), ou utilisez ↑ / ↓
+        </p>
+      </div>
+    </template>
 
     <Teleport to="body">
       <Transition name="fade">
         <div
           v-if="showAddModal"
-          class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
+          style="position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:80"
           @click.self="showAddModal = false"
         >
-          <div class="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Ajouter un anime</h2>
-            <div class="flex gap-2 mb-4">
+          <div style="width:100%;max-width:460px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:22px">
+            <h2 style="margin:0 0 16px;font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-0.01em;color:var(--text-primary)">
+              Ajouter un animé
+            </h2>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="Chercher un anime..."
-                class="flex-1 bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-amber-500 focus:outline-none"
+                placeholder="Chercher un animé..."
+                class="at-input"
+                style="flex:1"
                 @keyup.enter="handleSearch"
               />
-              <button @click="handleSearch" class="bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded font-semibold transition">
-                OK
+              <button type="button" class="at-btn-primary" @click="handleSearch">OK</button>
+            </div>
+
+            <div v-if="searchLoading" style="text-align:center;padding:16px;color:var(--text-secondary);font-size:14px">Recherche...</div>
+
+            <div v-else-if="searchResults.length > 0" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">
+              <button
+                v-for="anime in searchResults"
+                :key="anime.id"
+                type="button"
+                @click="handleAdd(anime.id)"
+                style="display:flex;align-items:center;gap:12px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);cursor:pointer;text-align:left"
+              >
+                <img
+                  v-if="anime.imageUrl"
+                  :src="anime.imageUrl"
+                  :alt="anime.title"
+                  style="width:40px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0"
+                />
+                <div
+                  v-else
+                  style="width:40px;height:56px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"
+                >
+                  🎌
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                    {{ anime.title }}
+                  </div>
+                  <div v-if="anime.score" style="margin-top:3px;font-family:var(--font-mono);font-size:12px;color:var(--rating)">
+                    ★ {{ anime.score.toFixed(1) }}
+                  </div>
+                </div>
               </button>
             </div>
 
-            <div v-if="searchLoading" class="text-center py-4 text-slate-400">Recherche...</div>
+            <p v-if="addError" style="margin:10px 0 0;font-size:13px;color:var(--color-accent-primary)">{{ addError }}</p>
 
-            <div v-else-if="searchResults.length > 0" class="space-y-2 max-h-72 overflow-y-auto">
-              <div
-                v-for="anime in searchResults"
-                :key="anime.id"
-                class="flex items-center gap-3 p-2 rounded hover:bg-slate-700 cursor-pointer transition"
-                @click="handleAdd(anime.id)"
-              >
-                <img v-if="anime.imageUrl" :src="anime.imageUrl" :alt="anime.title" class="w-10 h-14 object-cover rounded" />
-                <div v-else class="w-10 h-14 bg-slate-600 rounded flex items-center justify-center text-xl">🎌</div>
-                <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-sm truncate">{{ anime.title }}</p>
-                  <p v-if="anime.score" class="text-yellow-400 text-xs">⭐ {{ anime.score.toFixed(1) }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="addError" class="text-red-400 text-sm mt-2">{{ addError }}</div>
-
-            <button @click="showAddModal = false" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 py-2 rounded font-semibold transition">
+            <button
+              type="button"
+              class="at-btn-secondary"
+              style="width:100%;margin-top:14px"
+              @click="showAddModal = false"
+            >
               Fermer
             </button>
           </div>
@@ -139,7 +214,7 @@ definePageMeta({ middleware: "auth" });
 const route = useRoute();
 const listId = parseInt(route.params.id as string);
 
-const { fetchList, addAnimeToList, removeAnimeFromList } = useLists();
+const { fetchList, addAnimeToList, removeAnimeFromList, reorderListAnimes } = useLists();
 const { searchAnimes } = useAnimes();
 
 const list = ref<any>(null);
@@ -149,6 +224,19 @@ const searchQuery = ref("");
 const searchResults = ref<any[]>([]);
 const searchLoading = ref(false);
 const addError = ref("");
+const reordering = ref(false);
+const draggedAnimeId = ref<number | null>(null);
+const dragOverAnimeId = ref<number | null>(null);
+
+const animeCount = computed(() => list.value?.animes?.length || 0);
+
+const PLACEHOLDER_COLORS = [
+  { bg: "#3A3F52", fg: "#EDEBE4" },
+  { bg: "#2F5D50", fg: "#E8F2EE" },
+  { bg: "#5C4033", fg: "#F3E8DF" },
+  { bg: "#35408C", fg: "#EEF0F8" },
+  { bg: "#6B3A4A", fg: "#F8EBEF" },
+];
 
 onMounted(async () => {
   try {
@@ -159,6 +247,113 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+const animeIdOf = (item: any) => item?.animeId ?? item?.anime?.id;
+
+const initials = (title?: string) =>
+  (title || "?").replace(/[^A-Za-z0-9À-ÿ]/g, "").slice(0, 2).toUpperCase() || "?";
+
+const colorForTitle = (title?: string) => {
+  const s = title || "";
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) hash = (hash + s.charCodeAt(i) * (i + 1)) % 997;
+  return PLACEHOLDER_COLORS[hash % PLACEHOLDER_COLORS.length];
+};
+
+const thumbBg = (anime: any) => colorForTitle(anime?.title).bg;
+const thumbFg = (anime: any) => colorForTitle(anime?.title).fg;
+
+const yearOf = (anime: any) => {
+  if (!anime?.airedFrom) return null;
+  const y = new Date(anime.airedFrom).getFullYear();
+  return Number.isFinite(y) ? String(y) : null;
+};
+
+const metaLine = (anime: any) => {
+  const parts = [yearOf(anime), anime?.studio].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : "Infos indisponibles";
+};
+
+const rowStyle = (animeId: number) => {
+  const isOver = dragOverAnimeId.value === animeId && draggedAnimeId.value !== animeId;
+  return [
+    "display:flex",
+    "align-items:center",
+    "gap:12px",
+    "padding:12px 14px",
+    "border-radius:12px",
+    `border:1px solid ${isOver ? "var(--color-accent-primary)" : "var(--border)"}`,
+    "background:var(--bg-elevated)",
+    "cursor:grab",
+    "transition:border-color .12s ease,background .12s ease",
+    isOver ? "background:rgba(192,25,43,0.06)" : "",
+  ].join(";");
+};
+
+const persistOrder = async (orderedItems: any[], snapshot: any[]) => {
+  reordering.value = true;
+  list.value = { ...list.value, animes: orderedItems };
+  try {
+    const updated = await reorderListAnimes(
+      listId,
+      orderedItems.map((item: any) => animeIdOf(item)),
+    );
+    list.value = updated;
+  } catch (e) {
+    list.value = { ...list.value, animes: snapshot };
+    console.error(e);
+  } finally {
+    reordering.value = false;
+  }
+};
+
+const onDragStart = (animeId: number) => {
+  draggedAnimeId.value = animeId;
+};
+
+const onDragOverItem = (animeId: number) => {
+  if (draggedAnimeId.value === animeId) return;
+  dragOverAnimeId.value = animeId;
+};
+
+const onDragEnd = () => {
+  draggedAnimeId.value = null;
+  dragOverAnimeId.value = null;
+};
+
+const onDropOnItem = async (targetId: number) => {
+  if (!draggedAnimeId.value || draggedAnimeId.value === targetId || !list.value?.animes) {
+    onDragEnd();
+    return;
+  }
+
+  const items = [...list.value.animes];
+  const sourceIndex = items.findIndex((item: any) => animeIdOf(item) === draggedAnimeId.value);
+  const targetIndex = items.findIndex((item: any) => animeIdOf(item) === targetId);
+
+  if (sourceIndex < 0 || targetIndex < 0) {
+    onDragEnd();
+    return;
+  }
+
+  const snapshot = [...items];
+  const [moved] = items.splice(sourceIndex, 1);
+  items.splice(targetIndex, 0, moved);
+  await persistOrder(items, snapshot);
+  onDragEnd();
+};
+
+const moveItem = async (index: number, delta: number) => {
+  if (!list.value?.animes) return;
+  const targetIndex = index + delta;
+  if (targetIndex < 0 || targetIndex >= list.value.animes.length) return;
+
+  const snapshot = [...list.value.animes];
+  const items = [...list.value.animes];
+  const [moved] = items.splice(index, 1);
+  items.splice(targetIndex, 0, moved);
+  await persistOrder(items, snapshot);
+};
 
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) return;
@@ -196,6 +391,31 @@ const handleRemove = async (animeId: number) => {
 </script>
 
 <style scoped>
+.list-action-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+}
+.list-action-btn-alone {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .list-row {
+    flex-wrap: wrap !important;
+    row-gap: 10px !important;
+  }
+  .list-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 2px;
+  }
+}
 </style>

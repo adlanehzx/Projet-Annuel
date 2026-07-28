@@ -37,6 +37,7 @@ router.post("/register", async (req: Request, res: Response) => {
       id: user.id,
       email: user.email,
       username: user.username,
+      createdAt: user.createdAt,
     });
   } catch (error: any) {
     if (error.code === "P2002")
@@ -54,14 +55,12 @@ router.post("/login", async (req: Request, res: Response) => {
     if (!user || !user.password || !comparePassword(password, user.password))
       return res.status(401).json({ error: "Identifiants invalides" });
 
-    // Si 2FA activé, vérifier le token TOTP ou un code de secours
     if (user.totpEnabled) {
       if (backupCode) {
         const idx = findBackupCodeIndex(user.totpBackupCodes, backupCode);
         if (idx === -1)
           return res.status(401).json({ error: "Code de secours invalide" });
 
-        // Code à usage unique : on le retire immédiatement
         const remaining = [...user.totpBackupCodes];
         remaining.splice(idx, 1);
         await prisma.user.update({
@@ -81,7 +80,12 @@ router.post("/login", async (req: Request, res: Response) => {
 
     res.json({
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
@@ -123,7 +127,6 @@ router.post(
       if (!verifyTOTPToken(secret, totpToken))
         return res.status(400).json({ error: "Token invalide" });
 
-      // Activer 2FA + générer les codes de secours (affichés une seule fois)
       const backupCodes = generateBackupCodes();
 
       await prisma.user.update({
@@ -200,7 +203,6 @@ router.get(
   },
 );
 
-// POST /api/auth/2fa/backup-codes/regenerate - Régénérer les codes de secours
 router.post(
   "/2fa/backup-codes/regenerate",
   authMiddleware,
@@ -276,7 +278,12 @@ router.post("/oauth/google", async (req: Request, res: Response) => {
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error: any) {
     if (error.code === "P2002")
@@ -298,7 +305,12 @@ router.post("/oauth/github", async (req: Request, res: Response) => {
     const token = generateJWT(user.id, user.email);
     res.json({
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error: any) {
     if (error.code === "P2002")
@@ -323,10 +335,17 @@ router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
         isPublic: true,
         totpEnabled: true,
         createdAt: true,
+        password: true,
       },
     });
 
-    res.json(user);
+    if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+    const { password, ...safeUser } = user;
+    res.json({
+      ...safeUser,
+      hasPassword: !!password,
+    });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }
@@ -336,11 +355,26 @@ router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
     const userId = req.userId!;
     const { username, bio, isPublic } = req.body;
 
+    let nextBio: string | null | undefined = undefined;
+    if (bio !== undefined) {
+      if (bio === null) {
+        nextBio = null;
+      } else if (typeof bio !== "string") {
+        return res.status(400).json({ error: "La bio doit être une chaîne de caractères" });
+      } else {
+        const trimmed = bio.trim();
+        if (trimmed.length > 500) {
+          return res.status(400).json({ error: "La bio ne peut pas dépasser 500 caractères" });
+        }
+        nextBio = trimmed.length > 0 ? trimmed : null;
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
         ...(username && { username }),
-        ...(bio !== undefined && { bio }),
+        ...(nextBio !== undefined && { bio: nextBio }),
         ...(isPublic !== undefined && { isPublic }),
       },
       select: {
@@ -350,6 +384,7 @@ router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
         bio: true,
         avatar: true,
         isPublic: true,
+        createdAt: true,
       },
     });
 
@@ -357,6 +392,38 @@ router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error.code === "P2002")
       return res.status(400).json({ error: "Username déjà utilisé" });
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+router.delete("/account", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const { password, confirmation } = req.body || {};
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+    if (typeof confirmation !== "string" || confirmation.trim() !== user.username) {
+      return res.status(400).json({
+        error: "Confirmez la suppression en saisissant votre nom d'utilisateur",
+      });
+    }
+
+    if (user.password) {
+      if (!password || typeof password !== "string") {
+        return res.status(400).json({ error: "Mot de passe requis" });
+      }
+      if (!comparePassword(password, user.password)) {
+        return res.status(401).json({ error: "Mot de passe invalide" });
+      }
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+    emitToAll("stats:global-changed", { reason: "user-deleted" });
+
+    res.json({ success: true, message: "Compte supprimé" });
+  } catch (error) {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });

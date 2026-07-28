@@ -30,13 +30,13 @@ export const getUserStatistics = async (
   });
   const stats: UserStatistics = {
     totalAnimesWatched: completedCount,
-    totalEpisodesWatched: 0, // Nécessite des données d'épisodes dans la DB
-    totalDaysWatched: 0, // Nécessite des données de durée dans la DB
+    totalEpisodesWatched: 0,
+    totalDaysWatched: 0,
     averageRating:
       reviews.length > 0
         ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         : 0,
-    genreDistribution: [], // Nécessite des données de genre dans la DB (TMDB API)
+    genreDistribution: [],
     recommendations: [],
   };
 
@@ -54,10 +54,6 @@ export const getBasicStatistics = async (userId: number) => {
 
   const toWatchAnimes = await prisma.watchlist.count({
     where: { userId, status: "TO_WATCH" },
-  });
-
-  const droppedAnimes = await prisma.watchlist.count({
-    where: { userId, status: "DROPPED" },
   });
 
   const onHoldAnimes = await prisma.watchlist.count({
@@ -83,13 +79,11 @@ export const getBasicStatistics = async (userId: number) => {
       completed: completedAnimes,
       watching: watchingAnimes,
       toWatch: toWatchAnimes,
-      dropped: droppedAnimes,
       onHold: onHoldAnimes,
       total:
         completedAnimes +
         watchingAnimes +
         toWatchAnimes +
-        droppedAnimes +
         onHoldAnimes,
     },
     reviews: {
@@ -230,7 +224,7 @@ export const getRecommendations = async (userId: number) => {
         some: {
           userId,
           rating: {
-            gte: 8, // Notes >= 8
+            gte: 8,
           },
         },
       },
@@ -247,7 +241,7 @@ export const getRecommendations = async (userId: number) => {
     based_on_title: anime.title,
     based_on_rating: anime.reviews[0]?.rating,
     animeId: anime.animeId,
-    message: "Les animes similaires à celui-ci pourraient vous plaire",
+    message: "Les animés similaires à celui-ci pourraient vous plaire",
   }));
 
   return {

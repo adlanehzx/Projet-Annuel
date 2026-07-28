@@ -4,7 +4,7 @@
       ← Retour aux listes
     </NuxtLink>
 
-    <h1 style="font-family:var(--font-display);font-weight:700;font-size:28px;margin:0 0 18px;color:var(--text-primary)">
+    <h1 style="font-family:var(--font-display);font-weight:700;font-size:28px;letter-spacing:-0.01em;margin:0 0 18px;color:var(--text-primary)">
       Créer une liste
     </h1>
 

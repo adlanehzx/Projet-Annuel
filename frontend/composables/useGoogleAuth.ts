@@ -1,9 +1,6 @@
 export const useGoogleAuth = () => {
   const config = useRuntimeConfig();
 
-  // Charge le script Google Identity Services (une seule fois) et
-  // l'initialise avec le callback fourni. No-op si GOOGLE_CLIENT_ID
-  // n'est pas configuré côté serveur.
   const ensureLoaded = (
     onCredential: (response: { credential: string }) => void,
   ) => {

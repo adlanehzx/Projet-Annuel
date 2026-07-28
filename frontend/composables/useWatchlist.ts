@@ -87,6 +87,11 @@ export const useWatchlist = () => {
     }
   };
 
+  const clearWatchlist = () => {
+    watchlist.value = [];
+    error.value = "";
+  };
+
   const isInWatchlist = computed(() => (animeId: number) => {
     return watchlist.value.some((item: any) => item.animeId === animeId);
   });
@@ -105,6 +110,7 @@ export const useWatchlist = () => {
     updateProgress,
     removeFromWatchlist,
     reorderWatchlist,
+    clearWatchlist,
     isInWatchlist,
     getWatchlistItem,
   };

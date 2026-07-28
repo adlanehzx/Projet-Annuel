@@ -2,39 +2,35 @@
   <div style="min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:44px 20px">
     <div style="width:100%;max-width:420px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:36px 32px;display:flex;flex-direction:column;gap:16px">
 
-      <!-- Sceau -->
       <div style="display:flex;justify-content:center;margin-bottom:4px">
         <BrandSeal :size="56" format="svg" loading="eager" />
       </div>
 
-      <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;text-align:center;margin:0 0 4px">Connexion &#224; AnimeTrack</h1>
+      <h1 style="font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:-0.01em;text-align:center;margin:0 0 4px">Connexion &#224; HankoTrack</h1>
 
-      <!-- OAuth -->
       <button
         type="button"
-        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer"
+        class="at-btn-oauth"
         @click="handleGoogleClick"
       >
-        <span style="font-family:var(--font-display);font-weight:700;color:var(--color-accent-secondary)">G</span>
+        <AppIcon name="google" :size="20" />
         Continuer avec Google
       </button>
       <button
         type="button"
-        style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text-primary);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer"
+        class="at-btn-oauth"
         @click="handleGithubLogin"
       >
-        <span style="font-family:var(--font-display);font-weight:700">GH</span>
+        <AppIcon name="github" :size="20" />
         Continuer avec GitHub
       </button>
 
-      <!-- Divider -->
       <div style="display:flex;align-items:center;gap:12px;margin:4px 0">
         <span style="flex:1;height:1px;background:var(--border)"></span>
         <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">ou</span>
         <span style="flex:1;height:1px;background:var(--border)"></span>
       </div>
 
-      <!-- Form -->
       <form @submit.prevent="handleLogin" style="display:flex;flex-direction:column;gap:12px">
         <input
           v-model="form.email"
@@ -75,14 +71,15 @@
           />
           <button
             type="button"
-            style="background:none;border:none;padding:0;text-align:left;font-size:12px;color:var(--color-accent-secondary);cursor:pointer;width:fit-content"
+            class="at-btn-ghost is-accent"
+            style="padding:0;text-align:left;font-size:12px;width:fit-content"
             @click="useBackupCode = !useBackupCode"
           >
             {{ useBackupCode ? "Utiliser le code de l'application" : "Utiliser un code de secours" }}
           </button>
         </template>
 
-        <div v-if="error" style="padding:10px 14px;background:rgba(214,67,43,0.1);border:1px solid rgba(214,67,43,0.3);border-radius:8px;font-size:13px;color:var(--color-accent-primary)">
+        <div v-if="error" style="padding:10px 14px;background:rgba(192,25,43,0.1);border:1px solid rgba(192,25,43,0.3);border-radius:8px;font-size:13px;color:var(--color-accent-primary)">
           {{ error }}
         </div>
 
@@ -96,10 +93,9 @@
         </button>
       </form>
 
-      <!-- Footer -->
       <div style="display:flex;justify-content:space-between;gap:12px;margin-top:4px;font-size:13px">
         <span style="color:var(--text-secondary)">Pas encore de compte ?</span>
-        <NuxtLink to="/auth/register" style="color:var(--color-accent-secondary);text-decoration:none">Cr&#233;er un compte</NuxtLink>
+        <NuxtLink to="/auth/register" class="at-auth-switch">Cr&#233;er un compte</NuxtLink>
       </div>
     </div>
   </div>
@@ -131,7 +127,7 @@ const handleLogin = async () => {
       form.totpToken || undefined,
       form.backupCode || undefined,
     );
-    await navigateTo("/");
+    await navigateTo("/animes");
   } catch (err: any) {
     if (err.response?.data?.requiresTwoFactor) {
       requiresTwoFactor.value = true;
@@ -155,7 +151,7 @@ const handleGoogleCredential = async (response: { credential: string }) => {
   try {
     error.value = "";
     await loginWithGoogle(response.credential);
-    await navigateTo("/");
+    await navigateTo("/animes");
   } catch {
     error.value = authError.value || "Identifiants invalides";
   }
@@ -167,7 +163,7 @@ const handleGoogleClick = () => {
 
 onMounted(() => {
   if (useAuth().isAuthenticated.value) {
-    navigateTo("/");
+    navigateTo("/animes");
     return;
   }
 
