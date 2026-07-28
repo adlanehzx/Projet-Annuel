@@ -11,7 +11,7 @@
         <NuxtLink to="/animes" class="at-link" style="padding:0">Catalogue</NuxtLink>
         <NuxtLink to="/auth/login" class="at-link" style="font-weight:500;color:var(--text-primary);padding:8px 6px;white-space:nowrap">Connexion</NuxtLink>
         <NuxtLink to="/auth/register" class="at-btn-primary" style="padding:9px 18px;font-weight:500;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center">Commencer</NuxtLink>
-        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="font-size:15px">{{ isDark ? '☀️' : '🌙' }}</button>
+        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="font-size:15px"><AppIcon :name="isDark ? 'sun' : 'moon'" :size="16" /></button>
       </header>
       <header v-else :style="landingHeaderVars" class="guest-header-mobile" style="height:56px;background:var(--bg-elevated);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;position:sticky;top:0;z-index:50">
         <NuxtLink to="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
@@ -21,7 +21,7 @@
         <span style="flex:1"></span>
         <NuxtLink to="/animes" class="at-link" style="font-size:13px;padding:8px 6px;white-space:nowrap">Catalogue</NuxtLink>
         <NuxtLink to="/auth/login" class="at-link" style="font-size:13px;font-weight:500;color:var(--text-primary);padding:8px 6px;white-space:nowrap">Connexion</NuxtLink>
-        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:36px;height:36px;font-size:14px">{{ isDark ? '☀️' : '🌙' }}</button>
+        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:36px;height:36px;font-size:14px"><AppIcon :name="isDark ? 'sun' : 'moon'" :size="16" /></button>
       </header>
       <NuxtPage />
     </template>
@@ -60,12 +60,15 @@
         <span style="flex:1"></span>
 
         <div :style="`display:flex;align-items:center;justify-content:${collapsed ? 'center' : 'flex-start'};gap:10px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:${collapsed ? 'wrap' : 'nowrap'}`">
-          <div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;flex-shrink:0">{{ initials }}</div>
+          <div style="width:36px;height:36px;border-radius:999px;background:var(--color-accent-secondary);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px;flex-shrink:0;overflow:hidden">
+            <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+            <template v-else>{{ initials }}</template>
+          </div>
           <div v-if="!collapsed" style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ auth.user.value?.username }}</div>
             <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">Membre</div>
           </div>
-          <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:34px;height:34px;font-size:15px">{{ isDark ? '☀️' : '🌙' }}</button>
+          <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:34px;height:34px;font-size:15px"><AppIcon :name="isDark ? 'sun' : 'moon'" :size="16" /></button>
         </div>
 
         <button @click="handleLogout" title="Déconnexion" class="at-nav-item" :style="`justify-content:${collapsed ? 'center' : 'flex-start'}`">
@@ -86,9 +89,12 @@
           <span style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">HankoTrack</span>
         </NuxtLink>
         <span style="flex:1"></span>
-        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:40px;height:40px;font-size:15px">{{ isDark ? '☀️' : '🌙' }}</button>
+        <button @click="toggleDark" aria-label="Basculer thème" class="at-icon-btn" style="width:40px;height:40px;font-size:15px"><AppIcon :name="isDark ? 'sun' : 'moon'" :size="16" /></button>
         <div style="position:relative">
-          <button @click="avatarOpen = !avatarOpen" aria-label="Menu du compte" style="width:40px;height:40px;border-radius:999px;border:none;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-display);font-weight:700;font-size:12px;cursor:pointer;transition:filter var(--at-duration) ease, transform var(--at-duration) var(--at-ease)" class="at-avatar-trigger">{{ initials }}</button>
+          <button @click="avatarOpen = !avatarOpen" aria-label="Menu du compte" style="width:40px;height:40px;border-radius:999px;border:none;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-display);font-weight:700;font-size:12px;cursor:pointer;transition:filter var(--at-duration) ease, transform var(--at-duration) var(--at-ease);overflow:hidden;padding:0" class="at-avatar-trigger">
+            <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+            <template v-else>{{ initials }}</template>
+          </button>
           <Transition name="at-panel">
             <div v-if="avatarOpen" class="at-panel" style="position:absolute;right:0;top:46px;min-width:180px;padding:6px;z-index:80">
               <NuxtLink to="/profile" @click="avatarOpen=false" class="at-menu-item">Profil</NuxtLink>
@@ -133,6 +139,7 @@ declare const navigateTo: any;
 declare const process: any;
 
 const auth = useAuth();
+const { resolve: resolveAvatarUrl } = useAvatarUrl();
 const route = useRoute();
 const { collapsed, init: initSidebar, toggle: toggleSide } = useSidebar();
 const isDark = ref(true);
@@ -202,6 +209,7 @@ const mobileTabs = computed(() => [
 ]);
 
 const initials = computed(() => (auth.user.value?.username || "??").slice(0, 2).toUpperCase());
+const avatarSrc = computed(() => resolveAvatarUrl(auth.user.value?.avatar));
 
 const handleLogout = () => { avatarOpen.value = false; auth.logout(); navigateTo("/"); };
 </script>

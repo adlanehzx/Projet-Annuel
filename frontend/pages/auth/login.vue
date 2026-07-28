@@ -13,7 +13,7 @@
         class="at-btn-oauth"
         @click="handleGoogleClick"
       >
-        <span style="font-family:var(--font-display);font-weight:700;color:var(--color-accent-secondary)">G</span>
+        <AppIcon name="google" :size="20" />
         Continuer avec Google
       </button>
       <button
@@ -21,7 +21,7 @@
         class="at-btn-oauth"
         @click="handleGithubLogin"
       >
-        <span style="font-family:var(--font-display);font-weight:700">GH</span>
+        <AppIcon name="github" :size="20" />
         Continuer avec GitHub
       </button>
 

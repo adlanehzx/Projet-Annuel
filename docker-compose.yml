@@ -114,6 +114,8 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost:3000/auth/callback/github}
       - LIBRETRANSLATE_URL=http://libretranslate:5000
+    volumes:
+      - backend_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -128,3 +130,4 @@ networks:
 volumes:
   postgres_data:
   umami_db_data:
+  backend_uploads:

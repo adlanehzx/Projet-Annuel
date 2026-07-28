@@ -353,7 +353,7 @@ router.get("/profile", authMiddleware, async (req: Request, res: Response) => {
 router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
-    const { username, bio, avatar, isPublic } = req.body;
+    const { username, bio, isPublic } = req.body;
 
     let nextBio: string | null | undefined = undefined;
     if (bio !== undefined) {
@@ -375,7 +375,6 @@ router.put("/profile", authMiddleware, async (req: Request, res: Response) => {
       data: {
         ...(username && { username }),
         ...(nextBio !== undefined && { bio: nextBio }),
-        ...(avatar !== undefined && { avatar }),
         ...(isPublic !== undefined && { isPublic }),
       },
       select: {

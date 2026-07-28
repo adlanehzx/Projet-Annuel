@@ -1,12 +1,43 @@
-name: Deploy
+name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   workflow_dispatch: {}
 
 jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx prisma generate
+      - run: npm test
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm --prefix frontend install --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+
+  # Le déploiement ne dépend que des tests backend pour l'instant : les tests
+  # E2E sont en cours de mise en place et ne doivent pas bloquer la prod tant
+  # qu'ils ne sont pas stabilisés. Une fois mergés, ajouter "e2e-tests" ici.
   deploy:
+    needs: [backend-tests]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - name: Deploy sur le droplet via SSH

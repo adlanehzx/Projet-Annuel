@@ -1,7 +1,8 @@
 <template>
   <div style="display:flex;gap:12px;padding:16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px">
-    <div style="width:36px;height:36px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-body);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      {{ initials }}
+    <div style="width:36px;height:36px;border-radius:50%;background:var(--color-accent-secondary);color:#fff;font-family:var(--font-body);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+      <img v-if="avatarSrc" :src="avatarSrc" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+      <template v-else>{{ initials }}</template>
     </div>
 
     <div style="flex:1;min-width:0">
@@ -65,6 +66,7 @@ const props = defineProps<{
     likedByMe?: boolean;
     user?: {
       username?: string | null;
+      avatar?: string | null;
     };
   };
   loadingLike?: boolean;
@@ -78,8 +80,10 @@ const emit = defineEmits<{
   }): void;
 }>();
 
+const { resolve: resolveAvatarUrl } = useAvatarUrl();
 const username = computed(() => props.review.user?.username || "Anonyme");
 const initials = computed(() => (username.value || "?").slice(0, 2).toUpperCase());
+const avatarSrc = computed(() => resolveAvatarUrl(props.review.user?.avatar));
 const relativeDate = computed(() =>
   props.review.createdAt ? formatRelativeDate(props.review.createdAt) : "",
 );

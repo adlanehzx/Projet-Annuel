@@ -62,30 +62,30 @@
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
-            <div style="width:48px;height:48px;border-radius:10px;background:transparent;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden">
-              <img src="/images/stats-feature-icon-v2.svg" alt="Statistiques" style="width:48px;height:48px;object-fit:contain" />
+            <div style="width:48px;height:48px;border-radius:10px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden">
+              <img src="/images/stats-feature-icon-v2.svg" alt="Statistiques" style="width:30px;height:30px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Suivez vos progrès</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Gérez votre watchlist avec 4 statuts différents — À voir, En cours, Terminé, En pause.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
-            <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/images/4-etoiles.png" alt="Notations et critiques" style="width:48px;height:48px;object-fit:contain" />
+            <div style="width:48px;height:48px;border-radius:10px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+              <img src="/images/4-etoiles.png" alt="Notations et critiques" style="width:30px;height:30px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Notez et critiquez</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Rédigez des critiques détaillées avec une note de 0 à 10 pour chaque série.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
-            <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/images/liste-de-controle.png" alt="Listes personnalisées" style="width:48px;height:48px;object-fit:contain" />
+            <div style="width:48px;height:48px;border-radius:10px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+              <img src="/images/liste-de-controle.png" alt="Listes personnalisées" style="width:30px;height:30px;object-fit:contain" />
             </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Créez vos listes</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Organisez vos animés en listes personnalisées, publiques ou privées.</div>
           </div>
           <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:26px">
-            <div style="width:48px;height:48px;border-radius:10px; ;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px">
-              <img src="/images/des-medias-sociaux.png" alt="Recommendations" style="width:48px;height:48px;object-fit:contain" />
-            </div>            
+            <div style="width:48px;height:48px;border-radius:10px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+              <img src="/images/des-medias-sociaux.png" alt="Recommendations" style="width:30px;height:30px;object-fit:contain" />
+            </div>
             <div style="font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:8px">Découvrez des recommandations</div>
             <div style="font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--text-secondary)">Recevez des suggestions personnalisées selon votre historique.</div>
           </div>

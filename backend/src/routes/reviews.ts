@@ -130,7 +130,7 @@ router.get("/anime/:animeId", async (req: Request, res: Response) => {
     const reviews = await prisma.review.findMany({
       where: { watchlist: { animeId } },
       include: {
-        user: { select: { username: true } },
+        user: { select: { username: true, avatar: true } },
         likes: userId ? { where: { userId }, select: { id: true } } : false,
         _count: { select: { likes: true } },
       },
@@ -167,7 +167,7 @@ router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
     const reviews = await prisma.review.findMany({
       where: { watchlist: { animeId: watchlistEntry.animeId } },
       include: {
-        user: { select: { username: true } },
+        user: { select: { username: true, avatar: true } },
         likes: userId ? { where: { userId }, select: { id: true } } : false,
         _count: { select: { likes: true } },
       },
