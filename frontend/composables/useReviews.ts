@@ -26,6 +26,18 @@ export const useReviews = () => {
     }
   };
 
+  // Reviews de la communauté pour un anime, accessible sans connexion et
+  // sans que l'utilisateur ait besoin d'avoir cet anime dans sa watchlist.
+  const getAnimeReviews = async (animeId: number) => {
+    try {
+      const response = await api.get(`/reviews/anime/${animeId}`);
+      return response.data;
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Erreur lors du chargement";
+      return [];
+    }
+  };
+
   const createOrUpdateReview = async (
     watchlistId: number,
     rating: number,
@@ -88,6 +100,7 @@ export const useReviews = () => {
     error,
     getReview,
     getMovieReviews,
+    getAnimeReviews,
     createOrUpdateReview,
     deleteReview,
     likeReview,
