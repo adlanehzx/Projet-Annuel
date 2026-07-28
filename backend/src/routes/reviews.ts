@@ -123,6 +123,37 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
+// GET /reviews/anime/:animeId - reviews de la communauté pour un anime,
+// accessible sans être connecté et sans avoir soi-même cet anime en watchlist.
+router.get("/anime/:animeId", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const animeId = parseInt(req.params.animeId);
+
+    const reviews = await prisma.review.findMany({
+      where: { watchlist: { animeId } },
+      include: {
+        user: { select: { username: true } },
+        likes: userId ? { where: { userId }, select: { id: true } } : false,
+        _count: { select: { likes: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(
+      reviews.map((review) => ({
+        ...review,
+        likesCount: review._count.likes,
+        likedByMe: userId ? review.likes.length > 0 : false,
+        likes: undefined,
+        _count: undefined,
+      })),
+    );
+  } catch (error) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.get("/movie/:watchlistId", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
