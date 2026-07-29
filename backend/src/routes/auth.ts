@@ -338,9 +338,6 @@ router.post("/oauth/github", async (req: Request, res: Response) => {
   }
 });
 
-// Complète une connexion OAuth (Google/GitHub) sur un compte avec 2FA
-// activée : échange le pendingToken + le code TOTP/de secours contre un
-// vrai token de session.
 router.post("/oauth/2fa", async (req: Request, res: Response) => {
   try {
     const { pendingToken, totpToken, backupCode } = req.body;

@@ -1,4 +1,3 @@
--- Convert existing DROPPED entries, then remove the enum value.
 UPDATE "Watchlist" SET status = 'ON_HOLD' WHERE status = 'DROPPED';
 
 ALTER TYPE "WatchStatus" RENAME TO "WatchStatus_old";

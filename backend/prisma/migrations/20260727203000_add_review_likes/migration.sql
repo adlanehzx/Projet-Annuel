@@ -1,4 +1,3 @@
--- Review likes table for realtime like feature
 CREATE TABLE "ReviewLike" (
   "id" SERIAL NOT NULL,
   "userId" INTEGER NOT NULL,

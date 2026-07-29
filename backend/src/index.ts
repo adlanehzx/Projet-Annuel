@@ -33,10 +33,6 @@ const io = new Server(httpServer, {
   },
 });
 
-// Le token est optionnel : les visiteurs anonymes peuvent se connecter pour
-// recevoir les évènements publics (ex. stats:global-changed sur l'accueil),
-// mais ne rejoignent pas de room "user:{id}" personnelle. S'il y a un token,
-// il doit être valide (pas de connexion avec un token invalide).
 io.use((socket, next) => {
   const token =
     (socket.handshake.auth?.token as string | undefined) ||
@@ -84,10 +80,8 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Fichiers statiques (avatars uploadés) - pas d'auth : consommés via <img>
 app.use("/api/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Routes publiques
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", optionalAuthMiddleware, profileRoutes);
 app.use("/api/profile", authMiddleware, myProfileRoutes);

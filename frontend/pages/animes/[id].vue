@@ -107,7 +107,6 @@ import { useAnimes } from "../../composables/useAnimes";
 import { useReviews } from "../../composables/useReviews";
 import { useAuth } from "../../composables/useAuth";
 import { useAuthGuard } from "../../composables/useAuthGuard";
-// @ts-ignore
 import { io } from "socket.io-client";
 
 declare const useRoute: () => any;
@@ -166,9 +165,6 @@ onMounted(async () => {
       if (rev) myReview.value = { ...myReview.value, ...rev, hasSpoilers: !!rev.hasSpoilers };
     }
 
-    // La connexion socket n'exige plus de token côté serveur : un visiteur
-    // anonyme peut aussi recevoir les mises à jour publiques (likes, nouvelles
-    // reviews) sur cette page.
     const token = useState("auth.token", () => "").value;
     const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
     const socketUrl = baseUrl.replace(/\/api\/?$/, "");

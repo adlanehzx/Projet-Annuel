@@ -9,8 +9,6 @@ const router = Router();
 
 const AVATAR_URL_PREFIX = "/uploads/avatars/";
 
-// Supprime un ancien avatar uploadé localement (n'y touche pas si c'est une
-// URL externe, ex. photo de profil Google/GitHub récupérée via OAuth)
 const deleteLocalAvatarFile = (avatarUrl: string | null | undefined) => {
   if (!avatarUrl || !avatarUrl.startsWith(AVATAR_URL_PREFIX)) return;
   const filename = avatarUrl.slice(AVATAR_URL_PREFIX.length);
@@ -19,7 +17,6 @@ const deleteLocalAvatarFile = (avatarUrl: string | null | undefined) => {
   fs.unlink(filePath, () => {});
 };
 
-// GET /api/profile/stats - statistiques de l'utilisateur connecté (dashboard profil)
 router.get("/stats", async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
@@ -85,7 +82,6 @@ router.get("/genres", async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/profile/avatar - upload d'une nouvelle photo de profil
 router.post("/avatar", (req: Request, res: Response) => {
   uploadAvatar.single("avatar")(req, res, async (err: any) => {
     if (err) {
@@ -122,7 +118,6 @@ router.post("/avatar", (req: Request, res: Response) => {
   });
 });
 
-// DELETE /api/profile/avatar - retire la photo de profil actuelle
 router.delete("/avatar", async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;

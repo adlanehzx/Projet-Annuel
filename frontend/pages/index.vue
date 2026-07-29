@@ -192,7 +192,6 @@
 
 <script setup lang="ts">
 import { useApi } from "~/composables/useApi";
-// @ts-ignore
 import { io } from "socket.io-client";
 const githubLogo = "/images/logo-github.png";
 
@@ -223,10 +222,6 @@ onMounted(() => {
   fetchStats();
   fetchTopPosters();
 
-  // Pas besoin d'être connecté : cette page n'est de toute façon visible que
-  // par les visiteurs anonymes (les utilisateurs connectés sont redirigés
-  // vers /animes plus haut). Le serveur accepte les sockets sans token pour
-  // les évènements publics comme stats:global-changed.
   const token = useState("auth.token", () => "").value;
 
   const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");

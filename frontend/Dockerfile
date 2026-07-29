@@ -1,4 +1,3 @@
-# Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -11,12 +10,10 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY frontend/ .
 
-# Copier la configuration .env pour Docker
 COPY .env.docker .env
 
 RUN npm run build
 
-# Production stage
 FROM node:20-alpine
 
 WORKDIR /app

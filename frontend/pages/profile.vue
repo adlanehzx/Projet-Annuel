@@ -77,7 +77,6 @@
 <script setup lang="ts">
 import { useAuth } from "~/composables/useAuth";
 import { useApi } from "~/composables/useApi";
-// @ts-ignore
 import { io } from "socket.io-client";
 
 definePageMeta({ middleware: "auth" });

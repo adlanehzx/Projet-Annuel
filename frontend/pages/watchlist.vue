@@ -162,7 +162,6 @@
 
 <script setup lang="ts">
 import { useWatchlist } from "../composables/useWatchlist";
-// @ts-ignore
 import { io } from "socket.io-client";
 
 declare const definePageMeta: any;

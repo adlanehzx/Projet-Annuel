@@ -29,11 +29,6 @@ export default defineNuxtConfig({
     },
   },
 
-  // form-data (dépendance d'axios côté Node) expose un champ "browser" dans
-  // son package.json que le resolveur SSR de vite-node (nuxt dev) prend à
-  // tort, ce qui fait planter le SSR (form-data/lib/browser.js essaie
-  // d'utiliser le FormData du navigateur, absent en Node). On force la
-  // résolution vers son entrée Node.
   alias: {
     "form-data": "form-data/lib/form_data.js",
   },

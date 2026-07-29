@@ -7,7 +7,7 @@
     style="position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:120;max-width:920px;margin:0 auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:16px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,0.2)"
     class="at-cookie-banner"
   >
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
+    <div class="at-cookie-content" style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
       <div style="min-width:0;flex:1">
         <p style="margin:0 0 6px;font-family:var(--font-display);font-size:18px;line-height:1.2;color:var(--text-primary)">
           Votre vie privee, votre choix
@@ -18,7 +18,7 @@
         </p>
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <div class="at-cookie-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
         <button
           type="button"
           @click="reject"
@@ -56,6 +56,18 @@ const reject = () => setChoice("rejected");
   .at-cookie-banner {
     bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
   }
+
+  .at-cookie-content {
+    flex-direction: column;
+    gap: 12px !important;
+  }
+
+  .at-cookie-actions {
+    width: 100%;
+  }
+
+  .at-cookie-actions button {
+    flex: 1 1 0;
+  }
 }
 </style>
-
