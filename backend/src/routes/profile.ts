@@ -9,8 +9,7 @@ const router = Router();
 
 const AVATAR_URL_PREFIX = "/uploads/avatars/";
 
-// Supprime un ancien avatar uploadé localement (n'y touche pas si c'est une
-// URL externe, ex. photo de profil Google/GitHub récupérée via OAuth)
+// Ignore les URL externes (avatar Google/GitHub), ne supprime que les fichiers locaux
 const deleteLocalAvatarFile = (avatarUrl: string | null | undefined) => {
   if (!avatarUrl || !avatarUrl.startsWith(AVATAR_URL_PREFIX)) return;
   const filename = avatarUrl.slice(AVATAR_URL_PREFIX.length);

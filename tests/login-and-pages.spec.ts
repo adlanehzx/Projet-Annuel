@@ -16,9 +16,7 @@ test.describe('Connexion', () => {
     });
 
     await page.goto('/auth/login');
-    // Attend la fin de l'hydratation Vue avant d'interagir : sinon le clic
-    // peut arriver avant que @submit.prevent soit attaché, et le formulaire
-    // se soumet nativement au lieu d'être intercepté par le SPA.
+    // Attend l'hydratation Vue, sinon le clic arrive avant @submit.prevent
     await page.waitForLoadState('networkidle');
     await page.getByPlaceholder('Email').fill(testUser.email);
     await page.getByPlaceholder('Mot de passe').fill('mot-de-passe-e2e');

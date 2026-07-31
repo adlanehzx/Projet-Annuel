@@ -32,9 +32,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
 
-  # Le déploiement ne dépend que des tests backend pour l'instant : les tests
-  # E2E sont en cours de mise en place et ne doivent pas bloquer la prod tant
-  # qu'ils ne sont pas stabilisés. Une fois mergés, ajouter "e2e-tests" ici.
+  # Deploy ne dépend que des tests backend, l'E2E n'est pas encore stable
   deploy:
     needs: [backend-tests]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

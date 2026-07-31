@@ -166,9 +166,7 @@ onMounted(async () => {
       if (rev) myReview.value = { ...myReview.value, ...rev, hasSpoilers: !!rev.hasSpoilers };
     }
 
-    // La connexion socket n'exige plus de token côté serveur : un visiteur
-    // anonyme peut aussi recevoir les mises à jour publiques (likes, nouvelles
-    // reviews) sur cette page.
+    // Socket accessible aux visiteurs anonymes (likes/reviews publics)
     const token = useState("auth.token", () => "").value;
     const baseUrl = String(runtimeConfig.public.apiBase || "http://localhost:3001/api");
     const socketUrl = baseUrl.replace(/\/api\/?$/, "");

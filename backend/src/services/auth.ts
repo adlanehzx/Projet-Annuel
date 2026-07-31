@@ -39,9 +39,7 @@ export const generateJWT = (
   });
 };
 
-// Token de courte durée émis après une connexion OAuth réussie mais avant la
-// vérification 2FA. Ne doit jamais être accepté par authMiddleware comme un
-// token de session complet - seul /auth/oauth/2fa le consomme.
+// Token temporaire (5 min) en attente de vérification 2FA, jamais accepté comme session complète
 export const generateTwoFactorPendingToken = (userId: number): string => {
   return jwt.sign({ id: userId, purpose: "2fa_pending" }, env.jwtSecret, {
     expiresIn: "5m",

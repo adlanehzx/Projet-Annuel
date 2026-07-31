@@ -12,8 +12,7 @@ export const useAuth = () => {
         user.value = JSON.parse(savedUser);
         token.value = savedToken;
       } catch {
-        // localStorage corrompu (ex. "undefined" en toutes lettres) - on
-        // repart sur une session propre plutôt que de planter l'app.
+        // localStorage corrompu, on repart sur une session propre
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       }
@@ -22,8 +21,7 @@ export const useAuth = () => {
 
   const { get, post, put, del, postForm } = useApi();
 
-  // Relais entre la page de callback GitHub (redirection pleine page) et la
-  // page de login, quand le compte OAuth a la 2FA activée.
+  // Relais entre le callback GitHub et la page de login pour la 2FA
   const oauthTwoFactorPending = useState<string | null>(
     "auth.oauthTwoFactorPending",
     () => null,
@@ -86,9 +84,7 @@ export const useAuth = () => {
     }
   };
 
-  // Réponse OAuth : soit une session complète (token + user), soit un
-  // pendingToken si le compte a la 2FA activée (à finaliser via
-  // completeOAuthTwoFactor).
+  // Peut renvoyer un pendingToken au lieu d'une session si la 2FA est active
   const loginWithGoogle = async (idToken: string) => {
     isLoading.value = true;
     error.value = "";

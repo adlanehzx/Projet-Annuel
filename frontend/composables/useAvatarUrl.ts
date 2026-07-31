@@ -1,6 +1,4 @@
-// Les avatars uploadés localement sont stockés en base sous forme de chemin
-// relatif ("/uploads/avatars/xxx.webp"), servi par le backend sous /api.
-// Les avatars OAuth (Google/GitHub) sont déjà des URLs absolues.
+// Les avatars locaux sont stockés en chemin relatif, ceux d'OAuth en URL absolue
 export const useAvatarUrl = () => {
   const config = useRuntimeConfig();
 
